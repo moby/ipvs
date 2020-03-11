@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/docker/libnetwork/ns"
+	"github.com/moby/ipvs/ns"
 )
 
 // SetupTestOSContext joins a new network namespace, and returns its associated
