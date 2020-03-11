@@ -18,3 +18,15 @@ jobs:
       run: sudo modprobe ip_vs
     - name: Test
       run: sudo go test -v ./...
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Lint
+        run: |
+          docker run --rm -v `pwd`:/go/src/github.com/moby/ipvs -w /go/src/github.com/moby/ipvs \
+            golangci/golangci-lint:v1.23.8 golangci-lint run --disable-all -v \
+            -E govet -E misspell -E gofmt -E ineffassign -E golint
