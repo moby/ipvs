@@ -219,9 +219,6 @@ done:
 	for {
 		msgs, _, err := s.Receive()
 		if err != nil {
-			if s.GetFd() == -1 {
-				return nil, fmt.Errorf("Socket got closed on receive")
-			}
 			if err == syscall.EAGAIN {
 				// timeout fired
 				continue
