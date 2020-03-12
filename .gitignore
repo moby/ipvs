@@ -4,15 +4,12 @@
 *.so
 *~
 .gtm
-bin/
 tags
 .DS_Store
 
 # Folders
-integration-tmp/
 _obj
 _test
-.vagrant
 
 
 # Architecture specific extensions/prefixes
@@ -30,7 +27,6 @@ _testmain.go
 *.exe
 *.test
 *.prof
-cmd/dnet/dnet
 
 # Coverage
 *.tmp
@@ -40,7 +36,3 @@ cmd/dnet/dnet
 .project
 .settings/
 .idea/
-
-libnetworkbuild.created
-test/networkDb/testMain
-test/networkDb/gossipdb
