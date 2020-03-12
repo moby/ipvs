@@ -4,10 +4,12 @@ package ipvs
 
 import (
 	"net"
+	"runtime"
+	"syscall"
 	"testing"
 	"time"
 
-	"github.com/moby/ipvs/testutils"
+	"github.com/moby/ipvs/ns"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netlink/nl"
 	"golang.org/x/sys/unix"
@@ -114,21 +116,13 @@ func checkService(t *testing.T, i *Handle, s *Service, checkPresent bool) {
 }
 
 func TestGetFamily(t *testing.T) {
-	if testutils.RunningOnCircleCI() {
-		t.Skip("Skipping as not supported on CIRCLE CI kernel")
-	}
-
 	id, err := getIPVSFamily()
 	assert.NilError(t, err)
 	assert.Check(t, 0 != id)
 }
 
 func TestService(t *testing.T) {
-	if testutils.RunningOnCircleCI() {
-		t.Skip("Skipping as not supported on CIRCLE CI kernel")
-	}
-
-	defer testutils.SetupTestOSContext(t)()
+	defer setupTestOSContext(t)()
 
 	i, err := New("")
 	assert.NilError(t, err)
@@ -237,10 +231,6 @@ func TestService(t *testing.T) {
 }
 
 func createDummyInterface(t *testing.T) {
-	if testutils.RunningOnCircleCI() {
-		t.Skip("Skipping as not supported on CIRCLE CI kernel")
-	}
-
 	dummy := &netlink.Dummy{
 		LinkAttrs: netlink.LinkAttrs{
 			Name: "dummy",
@@ -264,7 +254,7 @@ func createDummyInterface(t *testing.T) {
 }
 
 func TestDestination(t *testing.T) {
-	defer testutils.SetupTestOSContext(t)()
+	defer setupTestOSContext(t)()
 
 	createDummyInterface(t)
 	i, err := New("")
@@ -355,10 +345,7 @@ func TestDestination(t *testing.T) {
 }
 
 func TestTimeouts(t *testing.T) {
-	if testutils.RunningOnCircleCI() {
-		t.Skip("Skipping as not supported on CIRCLE CI kernel")
-	}
-	defer testutils.SetupTestOSContext(t)()
+	defer setupTestOSContext(t)()
 
 	i, err := New("")
 	assert.NilError(t, err)
@@ -382,4 +369,37 @@ func TestTimeouts(t *testing.T) {
 	c3, err := i.GetConfig()
 	assert.NilError(t, err)
 	assert.DeepEqual(t, *c3, Config{77 * time.Second, 66 * time.Second, 77 * time.Second})
+}
+
+// setupTestOSContext joins a new network namespace, and returns its associated
+// teardown function.
+//
+// Example usage:
+//
+//     defer setupTestOSContext(t)()
+//
+func setupTestOSContext(t *testing.T) func() {
+	t.Helper()
+	runtime.LockOSThread()
+	if err := syscall.Unshare(syscall.CLONE_NEWNET); err != nil {
+		t.Fatalf("Failed to enter netns: %v", err)
+	}
+
+	fd, err := syscall.Open("/proc/self/ns/net", syscall.O_RDONLY, 0)
+	if err != nil {
+		t.Fatal("Failed to open netns file")
+	}
+
+	// Since we are switching to a new test namespace make
+	// sure to re-initialize initNs context
+	ns.Init()
+
+	runtime.LockOSThread()
+
+	return func() {
+		if err := syscall.Close(fd); err != nil {
+			t.Logf("Warning: netns closing failed (%v)", err)
+		}
+		runtime.UnlockOSThread()
+	}
 }
