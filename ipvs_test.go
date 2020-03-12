@@ -1,9 +1,11 @@
+//go:build linux
 // +build linux
 
 package ipvs
 
 import (
 	"net"
+	"reflect"
 	"runtime"
 	"syscall"
 	"testing"
@@ -13,8 +15,6 @@ import (
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netlink/nl"
 	"golang.org/x/sys/unix"
-	"gotest.tools/v3/assert"
-	is "gotest.tools/v3/assert/cmp"
 )
 
 var (
@@ -63,7 +63,9 @@ func checkDestination(t *testing.T, i *Handle, s *Service, d *Destination, check
 	var dstFound bool
 
 	dstArray, err := i.GetDestinations(s)
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to get destination; %v", err)
+	}
 
 	for _, dst := range dstArray {
 		if dst.Address.Equal(d.Address) && dst.Port == d.Port &&
@@ -75,12 +77,12 @@ func checkDestination(t *testing.T, i *Handle, s *Service, d *Destination, check
 	}
 
 	switch checkPresent {
-	case true: //The test expects the service to be present
+	case true: // The test expects the service to be present
 		if !dstFound {
 
 			t.Fatalf("Did not find the service %s in ipvs output", d.Address.String())
 		}
-	case false: //The test expects that the service should not be present
+	case false: // The test expects that the service should not be present
 		if dstFound {
 			t.Fatalf("Did not find the destination %s fwdMethod %s in ipvs output", d.Address.String(), lookupFwMethod(d.ConnectionFlags))
 		}
@@ -91,7 +93,9 @@ func checkDestination(t *testing.T, i *Handle, s *Service, d *Destination, check
 func checkService(t *testing.T, i *Handle, s *Service, checkPresent bool) {
 
 	svcArray, err := i.GetServices()
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatalf("Failed to get service; %v", err)
+	}
 
 	var svcFound bool
 
@@ -104,12 +108,12 @@ func checkService(t *testing.T, i *Handle, s *Service, checkPresent bool) {
 	}
 
 	switch checkPresent {
-	case true: //The test expects the service to be present
+	case true: // The test expects the service to be present
 		if !svcFound {
 
 			t.Fatalf("Did not find the service %s in ipvs output", s.Address.String())
 		}
-	case false: //The test expects that the service should not be present
+	case false: // The test expects that the service should not be present
 		if svcFound {
 			t.Fatalf("Did not expect the service %s in ipvs output", s.Address.String())
 		}
@@ -119,15 +123,21 @@ func checkService(t *testing.T, i *Handle, s *Service, checkPresent bool) {
 
 func TestGetFamily(t *testing.T) {
 	id, err := getIPVSFamily()
-	assert.NilError(t, err)
-	assert.Check(t, 0 != id)
+	if err != nil {
+		t.Fatal("Failed to get IPVS family:", err)
+	}
+	if id == 0 {
+		t.Error("IPVS family was 0")
+	}
 }
 
 func TestService(t *testing.T) {
 	defer setupTestOSContext(t)()
 
 	i, err := New("")
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to create IPVS handle:", err)
+	}
 
 	for _, protocol := range protocols {
 		for _, schedMethod := range schedMethods {
@@ -169,7 +179,9 @@ func TestService(t *testing.T) {
 				}
 
 				err := i.NewService(&s)
-				assert.NilError(t, err)
+				if err != nil {
+					t.Fatal("Failed to create service:", err)
+				}
 				checkService(t, i, &s, true)
 				for _, updateSchedMethod := range schedMethods {
 					if updateSchedMethod == schedMethod {
@@ -178,18 +190,30 @@ func TestService(t *testing.T) {
 
 					s.SchedName = updateSchedMethod
 					err = i.UpdateService(&s)
-					assert.NilError(t, err)
+					if err != nil {
+						t.Fatal("Failed to update service:", err)
+					}
 					checkService(t, i, &s, true)
 
 					scopy, err := i.GetService(&s)
-					assert.NilError(t, err)
-					assert.Check(t, is.Equal((*scopy).Address.String(), s.Address.String()))
-					assert.Check(t, is.Equal((*scopy).Port, s.Port))
-					assert.Check(t, is.Equal((*scopy).Protocol, s.Protocol))
+					if err != nil {
+						t.Fatal("Failed to get service:", err)
+					}
+					if expected := (*scopy).Address.String(); expected != s.Address.String() {
+						t.Errorf("expected: %v, got: %v", expected, s.Address.String())
+					}
+					if expected := (*scopy).Port; expected != s.Port {
+						t.Errorf("expected: %v, got: %v", expected, s.Port)
+					}
+					if expected := (*scopy).Protocol; expected != s.Protocol {
+						t.Errorf("expected: %v, got: %v", expected, s.Protocol)
+					}
 				}
 
 				err = i.DelService(&s)
-				assert.NilError(t, err)
+				if err != nil {
+					t.Fatal("Failed to delete service:", err)
+				}
 				checkService(t, i, &s, false)
 			}
 		}
@@ -217,16 +241,22 @@ func TestService(t *testing.T) {
 	for _, svc := range svcs {
 		if !i.IsServicePresent(&svc) {
 			err = i.NewService(&svc)
-			assert.NilError(t, err)
+			if err != nil {
+				t.Fatal("Failed to create service:", err)
+			}
 			checkService(t, i, &svc, true)
 		} else {
 			t.Errorf("svc: %v exists", svc)
 		}
 	}
 	err = i.Flush()
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to flush:", err)
+	}
 	got, err := i.GetServices()
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to get service:", err)
+	}
 	if len(got) != 0 {
 		t.Errorf("Unexpected services after flush")
 	}
@@ -240,19 +270,27 @@ func createDummyInterface(t *testing.T) {
 	}
 
 	err := netlink.LinkAdd(dummy)
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to add link:", err)
+	}
 
 	dummyLink, err := netlink.LinkByName("dummy")
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to get dummy link:", err)
+	}
 
 	ip, ipNet, err := net.ParseCIDR("10.1.1.1/24")
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to parse CIDR:", err)
+	}
 
 	ipNet.IP = ip
 
 	ipAddr := &netlink.Addr{IPNet: ipNet, Label: ""}
 	err = netlink.AddrAdd(dummyLink, ipAddr)
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to add IP address:", err)
+	}
 }
 
 func TestDestination(t *testing.T) {
@@ -260,7 +298,9 @@ func TestDestination(t *testing.T) {
 
 	createDummyInterface(t)
 	i, err := New("")
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to create IPVS handle:", err)
+	}
 
 	for _, protocol := range protocols {
 		testDatas := []struct {
@@ -304,7 +344,9 @@ func TestDestination(t *testing.T) {
 			}
 
 			err := i.NewService(&s)
-			assert.NilError(t, err)
+			if err != nil {
+				t.Fatal("Failed to create service:", err)
+			}
 			checkService(t, i, &s, true)
 
 			s.SchedName = ""
@@ -320,7 +362,9 @@ func TestDestination(t *testing.T) {
 					}
 					destinations = append(destinations, d)
 					err := i.NewDestination(&s, &d)
-					assert.NilError(t, err)
+					if err != nil {
+						t.Fatal("Failed to create destination:", err)
+					}
 					checkDestination(t, i, &s, &d, true)
 				}
 
@@ -331,13 +375,17 @@ func TestDestination(t *testing.T) {
 					for _, d := range destinations {
 						d.ConnectionFlags = updateFwdMethod
 						err = i.UpdateDestination(&s, &d)
-						assert.NilError(t, err)
+						if err != nil {
+							t.Fatal("Failed to update destination:", err)
+						}
 						checkDestination(t, i, &s, &d, true)
 					}
 				}
 				for _, d := range destinations {
 					err = i.DelDestination(&s, &d)
-					assert.NilError(t, err)
+					if err != nil {
+						t.Fatal("Failed to delete destination:", err)
+					}
 					checkDestination(t, i, &s, &d, false)
 				}
 			}
@@ -350,27 +398,44 @@ func TestTimeouts(t *testing.T) {
 	defer setupTestOSContext(t)()
 
 	i, err := New("")
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to create IPVS handle:", err)
+	}
 
 	_, err = i.GetConfig()
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to get config:", err)
+	}
 
 	cfg := Config{66 * time.Second, 66 * time.Second, 66 * time.Second}
 	err = i.SetConfig(&cfg)
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to set config:", err)
+	}
 
 	c2, err := i.GetConfig()
-	assert.NilError(t, err)
-	assert.DeepEqual(t, cfg, *c2)
+	if err != nil {
+		t.Fatal("Failed to get config:", err)
+	}
+	if !reflect.DeepEqual(*c2, cfg) {
+		t.Fatalf("expected: %+v, got: %+v", cfg, *c2)
+	}
 
 	//  A timeout value 0 means that the current timeout value of the corresponding entry is preserved
 	cfg = Config{77 * time.Second, 0 * time.Second, 77 * time.Second}
 	err = i.SetConfig(&cfg)
-	assert.NilError(t, err)
+	if err != nil {
+		t.Fatal("Failed to set config:", err)
+	}
 
 	c3, err := i.GetConfig()
-	assert.NilError(t, err)
-	assert.DeepEqual(t, *c3, Config{77 * time.Second, 66 * time.Second, 77 * time.Second})
+	if err != nil {
+		t.Fatal("Failed to get config:", err)
+	}
+	expected := Config{77 * time.Second, 66 * time.Second, 77 * time.Second}
+	if !reflect.DeepEqual(*c3, expected) {
+		t.Fatalf("expected: %+v, got: %+v", expected, *c3)
+	}
 }
 
 // setupTestOSContext joins a new network namespace, and returns its associated
@@ -378,8 +443,7 @@ func TestTimeouts(t *testing.T) {
 //
 // Example usage:
 //
-//     defer setupTestOSContext(t)()
-//
+//	defer setupTestOSContext(t)()
 func setupTestOSContext(t *testing.T) func() {
 	t.Helper()
 	runtime.LockOSThread()
@@ -389,7 +453,7 @@ func setupTestOSContext(t *testing.T) func() {
 
 	fd, err := syscall.Open("/proc/self/ns/net", syscall.O_RDONLY, 0)
 	if err != nil {
-		t.Fatal("Failed to open netns file")
+		t.Fatal("Failed to open netns file:", err)
 	}
 
 	// Since we are switching to a new test namespace make
