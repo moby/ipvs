@@ -38,6 +38,11 @@ type ipvsFlags struct {
 	mask  uint32
 }
 
+type ipvsInfo struct {
+	version       uint32
+	connTableSize uint32
+}
+
 func deserializeGenlMsg(b []byte) (hdr *genlMsgHdr) {
 	return (*genlMsgHdr)(unsafe.Pointer(&b[0:unsafe.Sizeof(*hdr)][0]))
 }
@@ -571,6 +576,44 @@ func (i *Handle) doSetConfigCmd(c *Config) error {
 	_, err := execute(i.sock, req, 0)
 
 	return err
+}
+
+// parseInfo given a ipvs netlink response this function will respond with a valid info entry, an error otherwise
+func (i *Handle) parseInfo(msg []byte) (*ipvsInfo, error) {
+	var info ipvsInfo
+
+	hdr := deserializeGenlMsg(msg)
+	attrs, err := nl.ParseRouteAttr(msg[hdr.Len():])
+	if err != nil {
+		return nil, err
+	}
+
+	for _, attr := range attrs {
+		attrType := int(attr.Attr.Type)
+		switch attrType {
+		case ipvsCmdAttrInfoVersion:
+			info.version = native.Uint32(attr.Value)
+		case ipvsCmdAttrInfoConnTableSize:
+			info.connTableSize = native.Uint32(attr.Value)
+		}
+	}
+
+	return &info, nil
+}
+
+// doGetInfoCmd a wrapper function to be used by GetInfo
+func (i *Handle) doGetInfoCmd() (*ipvsInfo, error) {
+	msg, err := i.doCmdWithoutAttr(ipvsCmdGetInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := i.parseInfo(msg[0])
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 // IPVS related netlink message format explained

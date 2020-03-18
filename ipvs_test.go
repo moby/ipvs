@@ -371,6 +371,19 @@ func TestTimeouts(t *testing.T) {
 	assert.DeepEqual(t, *c3, Config{77 * time.Second, 66 * time.Second, 77 * time.Second})
 }
 
+func TestInfo(t *testing.T) {
+	defer setupTestOSContext(t)
+
+	i, err := New("")
+	assert.NilError(t, err)
+
+	info, err := i.GetInfo()
+	assert.NilError(t, err)
+	assert.Check(t, info.Version != nil)
+	assert.Assert(t, info.Version.String() != "")
+	assert.Assert(t, info.ConnTableSize > 0)
+}
+
 // setupTestOSContext joins a new network namespace, and returns its associated
 // teardown function.
 //
