@@ -18,9 +18,10 @@ var (
 	initNs   netns.NsHandle
 	initNl   *netlink.Handle
 	initOnce sync.Once
-	// NetlinkSocketsTimeout represents the default timeout duration for the sockets
-	NetlinkSocketsTimeout = 3 * time.Second
 )
+
+// NetlinkSocketsTimeout represents the default timeout duration for the sockets
+const NetlinkSocketsTimeout = 3 * time.Second
 
 // Init initializes a new network namespace
 func Init() {
