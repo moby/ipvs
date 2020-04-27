@@ -287,25 +287,25 @@ func assembleStats(msg []byte) (SvcStats, error) {
 	for _, attr := range attrs {
 		attrType := int(attr.Attr.Type)
 		switch attrType {
-		case ipvsSvcStatsConns:
+		case ipvsStatsConns:
 			s.Connections = native.Uint32(attr.Value)
-		case ipvsSvcStatsPktsIn:
+		case ipvsStatsPktsIn:
 			s.PacketsIn = native.Uint32(attr.Value)
-		case ipvsSvcStatsPktsOut:
+		case ipvsStatsPktsOut:
 			s.PacketsOut = native.Uint32(attr.Value)
-		case ipvsSvcStatsBytesIn:
+		case ipvsStatsBytesIn:
 			s.BytesIn = native.Uint64(attr.Value)
-		case ipvsSvcStatsBytesOut:
+		case ipvsStatsBytesOut:
 			s.BytesOut = native.Uint64(attr.Value)
-		case ipvsSvcStatsCPS:
+		case ipvsStatsCPS:
 			s.CPS = native.Uint32(attr.Value)
-		case ipvsSvcStatsPPSIn:
+		case ipvsStatsPPSIn:
 			s.PPSIn = native.Uint32(attr.Value)
-		case ipvsSvcStatsPPSOut:
+		case ipvsStatsPPSOut:
 			s.PPSOut = native.Uint32(attr.Value)
-		case ipvsSvcStatsBPSIn:
+		case ipvsStatsBPSIn:
 			s.BPSIn = native.Uint32(attr.Value)
-		case ipvsSvcStatsBPSOut:
+		case ipvsStatsBPSOut:
 			s.BPSOut = native.Uint32(attr.Value)
 		}
 	}
