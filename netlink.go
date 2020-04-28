@@ -351,17 +351,6 @@ func assembleService(attrs []syscall.NetlinkRouteAttr) (*Service, error) {
 
 	}
 
-	// in older kernels (< 3.18), the svc address family attribute may not exist so we must
-	// assume it based on the svc address provided.
-	if s.AddressFamily == 0 {
-		addr := (net.IP)(addressBytes)
-		if addr.To4() != nil {
-			s.AddressFamily = syscall.AF_INET
-		} else {
-			s.AddressFamily = syscall.AF_INET6
-		}
-	}
-
 	// parse Address after parse AddressFamily incase of parseIP error
 	if addressBytes != nil {
 		ip, err := parseIP(addressBytes, s.AddressFamily)
