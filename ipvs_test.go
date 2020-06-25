@@ -66,7 +66,9 @@ func checkDestination(t *testing.T, i *Handle, s *Service, d *Destination, check
 	assert.NilError(t, err)
 
 	for _, dst := range dstArray {
-		if dst.Address.Equal(d.Address) && dst.Port == d.Port && lookupFwMethod(dst.ConnectionFlags) == lookupFwMethod(d.ConnectionFlags) {
+		if dst.Address.Equal(d.Address) && dst.Port == d.Port &&
+			lookupFwMethod(dst.ConnectionFlags) == lookupFwMethod(d.ConnectionFlags) &&
+			dst.AddressFamily == d.AddressFamily {
 			dstFound = true
 			break
 		}
