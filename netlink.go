@@ -116,6 +116,13 @@ func fillDestination(d *Destination) nl.NetlinkRequestData {
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrUpperThreshold, nl.Uint32Attr(d.UpperThreshold))
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrLowerThreshold, nl.Uint32Attr(d.LowerThreshold))
 
+	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrTunType, []byte{d.TunType})
+	// Port needs to be in network byte order.
+	portBuf = new(bytes.Buffer)
+	binary.Write(portBuf, binary.BigEndian, d.TunPort)
+	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrTunPort, portBuf.Bytes())
+	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrTunFlags, nl.Uint16Attr(d.TunFlags))
+
 	return cmdAttr
 }
 
@@ -456,6 +463,12 @@ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error)
 				return nil, err
 			}
 			d.Stats = DstStats(stats)
+		case ipvsDestAttrTunType:
+			d.TunType = attr.Value[0]
+		case ipvsDestAttrTunPort:
+			d.TunPort = binary.BigEndian.Uint16(attr.Value)
+		case ipvsDestAttrTunFlags:
+			d.TunFlags = native.Uint16(attr.Value)
 		}
 	}
 
