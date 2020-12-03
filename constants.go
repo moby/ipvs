@@ -86,6 +86,10 @@ const (
 	ipvsDestAttrPersistentConnections
 	ipvsDestAttrStats
 	ipvsDestAttrAddressFamily
+	ipvsDestAttrStats64
+	ipvsDestAttrTunType
+	ipvsDestAttrTunPort
+	ipvsDestAttrTunFlags
 )
 
 // IPVS Statistics constants
@@ -175,4 +179,28 @@ const (
 
 	// ConnFwdBypass denotes forwarding while bypassing the cache
 	ConnFwdBypass = 0x0004
+)
+
+// Tunnel Types
+const (
+	TunnelTypeIPIP uint8 = iota
+	TunnelTypeGUE
+	TunnelTypeGRE
+)
+
+// Tunnel encapsulation flags
+const (
+	EncapFlagNoCSum  = 0
+	EncapFlagCSum    = 1 << 0
+	EncapFlagRemCSum = 1 << 1
+)
+
+// Virtual Service Flags
+const (
+	SchedulerFlag1 = 0x0008
+	SchedulerFlag2 = 0x0010
+	SchedulerFlag3 = 0x0020
+
+	SchedulerMHFallback = SchedulerFlag1
+	SchedulerMHPort     = SchedulerFlag2
 )
