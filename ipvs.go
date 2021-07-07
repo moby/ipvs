@@ -62,6 +62,9 @@ type Destination struct {
 	ActiveConnections   int
 	InactiveConnections int
 	Stats               DstStats
+	TunType             uint8
+	TunPort             uint16
+	TunFlags            uint16
 }
 
 // DstStats defines IPVS destination (real server) statistics
