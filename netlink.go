@@ -110,8 +110,8 @@ func fillDestination(d *Destination) nl.NetlinkRequestData {
 	portBuf := new(bytes.Buffer)
 	binary.Write(portBuf, binary.BigEndian, d.Port)
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrPort, portBuf.Bytes())
-	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrAddressFamily, nl.Uint32Attr(uint32(d.AddressFamily)))
-	
+	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrAddressFamily, nl.Uint16Attr(d.AddressFamily))
+
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrForwardingMethod, nl.Uint32Attr(d.ConnectionFlags&ConnectionFlagFwdMask))
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrWeight, nl.Uint32Attr(uint32(d.Weight)))
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrUpperThreshold, nl.Uint32Attr(d.UpperThreshold))
