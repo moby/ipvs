@@ -223,6 +223,14 @@ func (i *Handle) SetConfig(c *Config) error {
 	return i.doSetConfigCmd(c)
 }
 
+func toVersion(v uint) *Version {
+	return &Version{
+		Major: (v >> 16) & 0xff,
+		Minor: (v >> 8) & 0xff,
+		Patch: v & 0xff,
+	}
+}
+
 // GetInfo returns info details from IPVS
 func (i *Handle) GetInfo() (*Info, error) {
 	res, err := i.doGetInfoCmd()
@@ -230,13 +238,18 @@ func (i *Handle) GetInfo() (*Info, error) {
 		return nil, err
 	}
 
-	ver := uint(res.version)
 	return &Info{
-		Version: &Version{
-			Major: (ver >> 16) & 0xff,
-			Minor: (ver >> 8) & 0xff,
-			Patch: ver & 0xff,
-		},
+		Version:       toVersion(uint(res.version)),
 		ConnTableSize: res.connTableSize,
 	}, nil
+}
+
+// GetVersion returns version from IPVS
+func (i *Handle) GetVersion() (*Version, error) {
+	res, err := i.doGetInfoCmd()
+	if err != nil {
+		return nil, err
+	}
+
+	return toVersion(uint(res.version)), nil
 }

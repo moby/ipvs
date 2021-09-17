@@ -4,6 +4,7 @@ package ipvs
 
 import (
 	"net"
+	"regexp"
 	"runtime"
 	"syscall"
 	"testing"
@@ -44,6 +45,8 @@ var (
 		"Tunnel",
 		"Route",
 	}
+
+	verRegexp = regexp.MustCompile(`^\d\.\d\.\d$`)
 )
 
 func lookupFwMethod(fwMethod uint32) string {
@@ -382,6 +385,17 @@ func TestInfo(t *testing.T) {
 	assert.Check(t, info.Version != nil)
 	assert.Assert(t, info.Version.String() != "")
 	assert.Assert(t, info.ConnTableSize > 0)
+}
+
+func TestVersion(t *testing.T) {
+	defer setupTestOSContext(t)
+
+	i, err := New("")
+	assert.NilError(t, err)
+
+	ver, err := i.GetVersion()
+	assert.NilError(t, err)
+	assert.Assert(t, verRegexp.MatchString(ver.String()))
 }
 
 // setupTestOSContext joins a new network namespace, and returns its associated
