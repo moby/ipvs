@@ -398,6 +398,17 @@ func TestVersion(t *testing.T) {
 	assert.Assert(t, verRegexp.MatchString(ver.String()))
 }
 
+func TestConnTableSize(t *testing.T) {
+	defer setupTestOSContext(t)
+
+	i, err := New("")
+	assert.NilError(t, err)
+
+	size, err := i.GetConnectionTableSize()
+	assert.NilError(t, err)
+	assert.Assert(t, size > 0)
+}
+
 // setupTestOSContext joins a new network namespace, and returns its associated
 // teardown function.
 //

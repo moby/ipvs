@@ -253,3 +253,13 @@ func (i *Handle) GetVersion() (*Version, error) {
 
 	return toVersion(uint(res.version)), nil
 }
+
+// GetConnectionTableSize returns connection table size from IPVS
+func (i *Handle) GetConnectionTableSize() (uint32, error) {
+	res, err := i.doGetInfoCmd()
+	if err != nil {
+		return 0, err
+	}
+
+	return res.connTableSize, nil
+}
