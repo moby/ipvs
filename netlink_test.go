@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package ipvs
@@ -37,6 +38,7 @@ func Test_getIPFamily(t *testing.T) {
 	}
 
 	for _, testcase := range testcases {
+		testcase := testcase
 		t.Run(testcase.name, func(t *testing.T) {
 			family, err := getIPFamily(testcase.address)
 			if !reflect.DeepEqual(err, testcase.expectedErr) {
