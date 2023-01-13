@@ -47,7 +47,6 @@ var (
 )
 
 func lookupFwMethod(fwMethod uint32) string {
-
 	switch fwMethod {
 	case ConnectionFlagMasq:
 		return fwdMethodStrings[0]
@@ -79,7 +78,6 @@ func checkDestination(t *testing.T, i *Handle, s *Service, d *Destination, check
 	switch checkPresent {
 	case true: // The test expects the service to be present
 		if !dstFound {
-
 			t.Fatalf("Did not find the service %s in ipvs output", d.Address.String())
 		}
 	case false: // The test expects that the service should not be present
@@ -87,11 +85,9 @@ func checkDestination(t *testing.T, i *Handle, s *Service, d *Destination, check
 			t.Fatalf("Did not find the destination %s fwdMethod %s in ipvs output", d.Address.String(), lookupFwMethod(d.ConnectionFlags))
 		}
 	}
-
 }
 
 func checkService(t *testing.T, i *Handle, s *Service, checkPresent bool) {
-
 	svcArray, err := i.GetServices()
 	if err != nil {
 		t.Fatalf("Failed to get service; %v", err)
@@ -100,7 +96,6 @@ func checkService(t *testing.T, i *Handle, s *Service, checkPresent bool) {
 	var svcFound bool
 
 	for _, svc := range svcArray {
-
 		if svc.Protocol == s.Protocol && svc.Address.String() == s.Address.String() && svc.Port == s.Port {
 			svcFound = true
 			break
@@ -110,7 +105,6 @@ func checkService(t *testing.T, i *Handle, s *Service, checkPresent bool) {
 	switch checkPresent {
 	case true: // The test expects the service to be present
 		if !svcFound {
-
 			t.Fatalf("Did not find the service %s in ipvs output", s.Address.String())
 		}
 	case false: // The test expects that the service should not be present
@@ -118,7 +112,6 @@ func checkService(t *testing.T, i *Handle, s *Service, checkPresent bool) {
 			t.Fatalf("Did not expect the service %s in ipvs output", s.Address.String())
 		}
 	}
-
 }
 
 func TestGetFamily(t *testing.T) {
