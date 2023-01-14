@@ -1,32 +1,77 @@
 name: Test
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
 jobs:
   test:
+    permissions:
+      contents: read      # for actions/checkout to fetch code
+    timeout-minutes: 10
+
     strategy:
       matrix:
-        go-versions: [1.12.x, 1.13.x, 1.14.x]
-        platform: [ubuntu-latest]
-    runs-on: ${{ matrix.platform }}
+        # test against the "oldest" supported version and the current version
+        # of go. Go 1.17 is kept in this matrix as it is the minimum version
+        # specified in go.mod, and maintaining compatibility with go 1.17 is
+        # currently not much of a burden. Most projects using this module are
+        # using newer versions than that, so we can drop the old version if
+        # it becomes too much of a burden.
+        go-version: [1.17.x, 1.19.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
-      uses: actions/setup-go@v1
+      uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
+    - name: go mod tidy
+      run: |
+        go mod tidy
+        git diff --exit-code
     - name: Ensure IPVS module
-      run: sudo modprobe ip_vs
+      run: |
+        sudo modprobe ip_vs
     - name: Test
-      run: sudo go test -v ./...
+      run: |
+        go test -exec "sudo -n" -v ./...
   lint:
+    permissions:
+      contents: read      # for actions/checkout to fetch code
+      pull-requests: read # for golangci/golangci-lint-action to fetch pull requests
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v3
+        with:
+          # We only run on the latest version of go, as some linters may be
+          # version-dependent (for example gofmt can change between releases).
+          go-version: 1.19.x
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Lint
-        run: |
-          docker run --rm -v `pwd`:/go/src/github.com/moby/ipvs -w /go/src/github.com/moby/ipvs \
-            golangci/golangci-lint:v1.23.8 golangci-lint run --disable-all -v \
-            -E govet -E misspell -E gofmt -E ineffassign -E golint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: "v1.50.1"
+          skip-cache: true
+          args: --print-resources-usage --timeout=5m --verbose
+
+          # Optional: show only new issues if it's a pull request. The default value is `false`.
+          # only-new-issues: true
+
+          # Optional: if set to true then the action don't cache or restore ~/go/pkg.
+          # skip-pkg-cache: true
+
+          # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
+          # skip-build-cache: true
