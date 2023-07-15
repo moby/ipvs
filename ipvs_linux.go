@@ -83,8 +83,6 @@ type Handle struct {
 // passed path. It will return a valid handle or an error in case an
 // error occurred while creating the handle.
 func New(path string) (*Handle, error) {
-	setup()
-
 	n := netns.None()
 	if path != "" {
 		var err error
@@ -94,6 +92,14 @@ func New(path string) (*Handle, error) {
 		}
 	}
 	defer n.Close()
+	return NewInNamespace(n)
+}
+
+// NewInNamespace provides a new ipvs handle in the namespace provided
+// as a parameter. It will return a valid handle or an error in case an
+// error occurred while creating the handle.
+func NewInNamespace(n netns.NsHandle) (*Handle, error) {
+	setup()
 
 	sock, err := nl.GetNetlinkSocketAt(n, netns.None(), unix.NETLINK_GENERIC)
 	if err != nil {
