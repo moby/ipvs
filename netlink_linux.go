@@ -61,12 +61,18 @@ func setup() {
 	ipvsOnce.Do(func() {
 		var err error
 		if out, err := exec.Command("modprobe", "-va", "ip_vs").CombinedOutput(); err != nil {
-			logrus.Warnf("Running modprobe ip_vs failed with message: `%s`, error: %v", strings.TrimSpace(string(out)), err)
+			logrus.Warnf(
+				"Running modprobe ip_vs failed with message: `%s`, error: %v",
+				strings.TrimSpace(string(out)),
+				err,
+			)
 		}
 
 		ipvsFamily, err = getIPVSFamily()
 		if err != nil {
-			logrus.Error("Could not get ipvs family information from the kernel. It is possible that ipvs is not enabled in your kernel. Native loadbalancing will not work until this is fixed.")
+			logrus.Error(
+				"Could not get ipvs family information from the kernel. It is possible that ipvs is not enabled in your kernel. Native loadbalancing will not work until this is fixed.",
+			)
 		}
 	})
 }
@@ -109,10 +115,15 @@ func fillDestination(d *Destination) nl.NetlinkRequestData {
 	binary.Write(portBuf, binary.BigEndian, d.Port)
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrPort, portBuf.Bytes())
 
-	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrForwardingMethod, nl.Uint32Attr(d.ConnectionFlags&ConnectionFlagFwdMask))
+	nl.NewRtAttrChild(
+		cmdAttr,
+		ipvsDestAttrForwardingMethod,
+		nl.Uint32Attr(d.ConnectionFlags&ConnectionFlagFwdMask),
+	)
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrWeight, nl.Uint32Attr(uint32(d.Weight)))
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrUpperThreshold, nl.Uint32Attr(d.UpperThreshold))
 	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrLowerThreshold, nl.Uint32Attr(d.LowerThreshold))
+	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrAddressFamily, nl.Uint16Attr(d.AddressFamily))
 
 	return cmdAttr
 }
@@ -521,7 +532,9 @@ func (i *Handle) parseDestination(msg []byte) (*Destination, error) {
 		return nil, err
 	}
 	if len(NetLinkAttrs) == 0 {
-		return nil, fmt.Errorf("error no valid netlink message found while parsing destination record")
+		return nil, fmt.Errorf(
+			"error no valid netlink message found while parsing destination record",
+		)
 	}
 
 	// Now Parse and get IPVS related attributes messages packed in this message.
@@ -604,7 +617,9 @@ func (i *Handle) doSetConfigCmd(c *Config) error {
 	req.Seq = atomic.AddUint32(&i.seq, 1)
 
 	req.AddData(nl.NewRtAttr(ipvsCmdAttrTimeoutTCP, nl.Uint32Attr(uint32(c.TimeoutTCP.Seconds()))))
-	req.AddData(nl.NewRtAttr(ipvsCmdAttrTimeoutTCPFin, nl.Uint32Attr(uint32(c.TimeoutTCPFin.Seconds()))))
+	req.AddData(
+		nl.NewRtAttr(ipvsCmdAttrTimeoutTCPFin, nl.Uint32Attr(uint32(c.TimeoutTCPFin.Seconds()))),
+	)
 	req.AddData(nl.NewRtAttr(ipvsCmdAttrTimeoutUDP, nl.Uint32Attr(uint32(c.TimeoutUDP.Seconds()))))
 
 	_, err := execute(i.sock, req, 0)
