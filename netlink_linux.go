@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"os/exec"
 	"strings"
@@ -112,7 +113,10 @@ func fillService(s *Service) nl.NetlinkRequestData {
 	return cmdAttr
 }
 
-func fillDestination(d *Destination) nl.NetlinkRequestData {
+func fillDestination(d *Destination) (nl.NetlinkRequestData, error) {
+	if d.Weight < 0 || d.Weight > math.MaxInt32 {
+		return nil, fmt.Errorf("destination weight out of range: %d", d.Weight)
+	}
 	cmdAttr := nl.NewRtAttr(ipvsCmdAttrDest, nil)
 
 	cmdAttr.AddRtAttr(ipvsDestAttrAddress, rawIPData(d.Address))
@@ -125,7 +129,7 @@ func fillDestination(d *Destination) nl.NetlinkRequestData {
 	cmdAttr.AddRtAttr(ipvsDestAttrUpperThreshold, nl.Uint32Attr(d.UpperThreshold))
 	cmdAttr.AddRtAttr(ipvsDestAttrLowerThreshold, nl.Uint32Attr(d.LowerThreshold))
 
-	return cmdAttr
+	return cmdAttr, nil
 }
 
 func (i *Handle) doCmdwithResponse(s *Service, d *Destination, cmd uint8) ([][]byte, error) {
@@ -144,7 +148,11 @@ func (i *Handle) doCmdwithResponse(s *Service, d *Destination, cmd uint8) ([][]b
 			req.Flags |= syscall.NLM_F_DUMP
 		}
 	} else {
-		req.AddData(fillDestination(d))
+		attr, err := fillDestination(d)
+		if err != nil {
+			return nil, err
+		}
+		req.AddData(attr)
 	}
 
 	res, err := execute(i.sock, req, 0)
@@ -254,11 +262,14 @@ done:
 				break done
 			}
 			if m.Header.Type == syscall.NLMSG_ERROR {
-				error := int32(native.Uint32(m.Data[0:4]))
-				if error == 0 {
+				if len(m.Data) < 4 {
+					return nil, fmt.Errorf("invalid netlink error response: message too short")
+				}
+				errno := native.Uint32(m.Data[:4])
+				if errno == 0 {
 					break done
 				}
-				return nil, syscall.Errno(-error)
+				return nil, syscall.Errno(-errno)
 			}
 			if resType != 0 && m.Header.Type != resType {
 				continue
