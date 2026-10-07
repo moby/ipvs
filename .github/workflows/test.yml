@@ -3,48 +3,47 @@ on:
   push:
     tags:
       - v*
-    branches:
-      - master
-      - main
+    branches: [ "main" ]
   pull_request:
-    branches:
-      - master
-      - main
+    branches: [ "main" ]
+
+permissions:
+  contents: read
 
 jobs:
   test:
-    permissions:
-      contents: read      # for actions/checkout to fetch code
-    timeout-minutes: 10
-
+    name: ${{ matrix.os }} / ${{ matrix.go-version || 'minimum' }}
     strategy:
       matrix:
-        # test against the "oldest" supported version and the current version
-        # of go. Go 1.17 is kept in this matrix as it is the minimum version
-        # specified in go.mod, and maintaining compatibility with go 1.17 is
-        # currently not much of a burden. Most projects using this module are
-        # using newer versions than that, so we can drop the old version if
-        # it becomes too much of a burden.
-        go-version: [1.17.x, 1.19.x]
+        go-version:
+          - "" # leave empty to use go-version-file (use go.mod); see https://github.com/actions/setup-go/issues/450#issuecomment-3620402646
+          - oldstable
+          - stable
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: ${{ matrix.go-version }}
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: go mod tidy
-      run: |
-        go mod tidy
-        git diff --exit-code
-    - name: Ensure IPVS module
-      run: |
-        sudo modprobe ip_vs
-    - name: Test
-      run: |
-        go test -exec "sudo -n" -v ./...
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go-version }}
+          go-version-file: go.mod # used when go-version is empty.
+
+      - name: go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code
+      - name: Ensure IPVS module
+        run: |
+          sudo modprobe ip_vs
+      - name: Test
+        run: |
+          go test -exec "sudo -n" -v ./...
   lint:
     permissions:
       contents: read      # for actions/checkout to fetch code
@@ -52,26 +51,19 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v3
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           # We only run on the latest version of go, as some linters may be
           # version-dependent (for example gofmt can change between releases).
-          go-version: 1.19.x
-      - name: Checkout code
-        uses: actions/checkout@v3
+          go-version: stable
       - name: Lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
-          version: "v1.50.1"
+          version: v2.14
+          args: --timeout=10m --verbose
           skip-cache: true
-          args: --print-resources-usage --timeout=5m --verbose
-
-          # Optional: show only new issues if it's a pull request. The default value is `false`.
-          # only-new-issues: true
-
-          # Optional: if set to true then the action don't cache or restore ~/go/pkg.
-          # skip-pkg-cache: true
-
-          # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
-          # skip-build-cache: true
