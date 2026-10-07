@@ -243,7 +243,7 @@ done:
 		msgs, _, err := s.Receive()
 		if err != nil {
 			if s.GetFd() == -1 {
-				return nil, fmt.Errorf("Socket got closed on receive")
+				return nil, fmt.Errorf("socket got closed on receive")
 			}
 			if err == syscall.EAGAIN {
 				// timeout fired
@@ -256,7 +256,7 @@ done:
 				continue
 			}
 			if m.Header.Pid != pid {
-				return nil, fmt.Errorf("Wrong pid %d, expected %d", m.Header.Pid, pid)
+				return nil, fmt.Errorf("wrong pid %d, expected %d", m.Header.Pid, pid)
 			}
 			if m.Header.Type == syscall.NLMSG_DONE {
 				break done

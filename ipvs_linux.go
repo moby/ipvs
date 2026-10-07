@@ -187,7 +187,7 @@ func (i *Handle) GetService(s *Service) (*Service, error) {
 
 	// We are looking for exactly one service otherwise error out
 	if len(res) != 1 {
-		return nil, fmt.Errorf("Expected only one service obtained=%d", len(res))
+		return nil, fmt.Errorf("expected only one service obtained=%d", len(res))
 	}
 
 	return res[0], nil
