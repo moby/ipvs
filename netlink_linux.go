@@ -73,46 +73,45 @@ func setup() {
 
 func fillService(s *Service) nl.NetlinkRequestData {
 	cmdAttr := nl.NewRtAttr(ipvsCmdAttrService, nil)
-	nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrAddressFamily, nl.Uint16Attr(s.AddressFamily))
+	cmdAttr.AddRtAttr(ipvsSvcAttrAddressFamily, nl.Uint16Attr(s.AddressFamily))
 	if s.FWMark != 0 {
-		nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrFWMark, nl.Uint32Attr(s.FWMark))
+		cmdAttr.AddRtAttr(ipvsSvcAttrFWMark, nl.Uint32Attr(s.FWMark))
 	} else {
-		nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrProtocol, nl.Uint16Attr(s.Protocol))
-		nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrAddress, rawIPData(s.Address))
+		cmdAttr.AddRtAttr(ipvsSvcAttrProtocol, nl.Uint16Attr(s.Protocol))
+		cmdAttr.AddRtAttr(ipvsSvcAttrAddress, rawIPData(s.Address))
 
 		// Port needs to be in network byte order.
-		portBuf := new(bytes.Buffer)
-		binary.Write(portBuf, binary.BigEndian, s.Port)
-		nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrPort, portBuf.Bytes())
+		var portBuf bytes.Buffer
+		_ = binary.Write(&portBuf, binary.BigEndian, s.Port)
+		cmdAttr.AddRtAttr(ipvsSvcAttrPort, portBuf.Bytes())
 	}
 
-	nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrSchedName, nl.ZeroTerminated(s.SchedName))
+	cmdAttr.AddRtAttr(ipvsSvcAttrSchedName, nl.ZeroTerminated(s.SchedName))
 	if s.PEName != "" {
-		nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrPEName, nl.ZeroTerminated(s.PEName))
+		cmdAttr.AddRtAttr(ipvsSvcAttrPEName, nl.ZeroTerminated(s.PEName))
 	}
 	f := &ipvsFlags{
 		flags: s.Flags,
 		mask:  0xFFFFFFFF,
 	}
-	nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrFlags, f.Serialize())
-	nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrTimeout, nl.Uint32Attr(s.Timeout))
-	nl.NewRtAttrChild(cmdAttr, ipvsSvcAttrNetmask, nl.Uint32Attr(s.Netmask))
+	cmdAttr.AddRtAttr(ipvsSvcAttrFlags, f.Serialize())
+	cmdAttr.AddRtAttr(ipvsSvcAttrTimeout, nl.Uint32Attr(s.Timeout))
+	cmdAttr.AddRtAttr(ipvsSvcAttrNetmask, nl.Uint32Attr(s.Netmask))
 	return cmdAttr
 }
 
 func fillDestination(d *Destination) nl.NetlinkRequestData {
 	cmdAttr := nl.NewRtAttr(ipvsCmdAttrDest, nil)
 
-	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrAddress, rawIPData(d.Address))
+	cmdAttr.AddRtAttr(ipvsDestAttrAddress, rawIPData(d.Address))
 	// Port needs to be in network byte order.
-	portBuf := new(bytes.Buffer)
-	binary.Write(portBuf, binary.BigEndian, d.Port)
-	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrPort, portBuf.Bytes())
-
-	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrForwardingMethod, nl.Uint32Attr(d.ConnectionFlags&ConnectionFlagFwdMask))
-	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrWeight, nl.Uint32Attr(uint32(d.Weight)))
-	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrUpperThreshold, nl.Uint32Attr(d.UpperThreshold))
-	nl.NewRtAttrChild(cmdAttr, ipvsDestAttrLowerThreshold, nl.Uint32Attr(d.LowerThreshold))
+	var portBuf bytes.Buffer
+	_ = binary.Write(&portBuf, binary.BigEndian, d.Port)
+	cmdAttr.AddRtAttr(ipvsDestAttrPort, portBuf.Bytes())
+	cmdAttr.AddRtAttr(ipvsDestAttrForwardingMethod, nl.Uint32Attr(d.ConnectionFlags&ConnectionFlagFwdMask))
+	cmdAttr.AddRtAttr(ipvsDestAttrWeight, nl.Uint32Attr(uint32(d.Weight)))
+	cmdAttr.AddRtAttr(ipvsDestAttrUpperThreshold, nl.Uint32Attr(d.UpperThreshold))
+	cmdAttr.AddRtAttr(ipvsDestAttrLowerThreshold, nl.Uint32Attr(d.LowerThreshold))
 
 	return cmdAttr
 }
