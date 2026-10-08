@@ -186,7 +186,7 @@ func getIPVSFamily() (int, error) {
 
 	for _, m := range msgs {
 		if len(m) < genlMsgHdrLen {
-			return 0, fmt.Errorf("invalid generic netlink response: message too short")
+			return 0, errors.New("invalid generic netlink response: message too short")
 		}
 
 		attrs, err := nl.ParseRouteAttr(m[genlMsgHdrLen:])
@@ -199,13 +199,13 @@ func getIPVSFamily() (int, error) {
 				continue
 			}
 			if len(attr.Value) < 2 {
-				return 0, fmt.Errorf("invalid generic netlink response: family ID too short")
+				return 0, errors.New("invalid generic netlink response: family ID too short")
 			}
 			return int(native.Uint16(attr.Value[:2])), nil
 		}
 	}
 
-	return 0, fmt.Errorf("no family id in the netlink response")
+	return 0, errors.New("no family id in the netlink response")
 }
 
 func rawIPData(ip net.IP) []byte {
@@ -243,7 +243,7 @@ done:
 		msgs, _, err := s.Receive()
 		if err != nil {
 			if s.GetFd() == -1 {
-				return nil, fmt.Errorf("socket got closed on receive")
+				return nil, errors.New("socket got closed on receive")
 			}
 			if err == syscall.EAGAIN {
 				// timeout fired
@@ -263,7 +263,7 @@ done:
 			}
 			if m.Header.Type == syscall.NLMSG_ERROR {
 				if len(m.Data) < 4 {
-					return nil, fmt.Errorf("invalid netlink error response: message too short")
+					return nil, errors.New("invalid netlink error response: message too short")
 				}
 				errno := native.Uint32(m.Data[:4])
 				if errno == 0 {
@@ -391,14 +391,14 @@ func (i *Handle) parseService(msg []byte) (*Service, error) {
 
 	// Remove General header for this message and parse the NetLink message
 	if len(msg) < genlMsgHdrLen {
-		return nil, fmt.Errorf("invalid generic netlink response: message too short")
+		return nil, errors.New("invalid generic netlink response: message too short")
 	}
 	NetLinkAttrs, err := nl.ParseRouteAttr(msg[genlMsgHdrLen:])
 	if err != nil {
 		return nil, err
 	}
 	if len(NetLinkAttrs) == 0 {
-		return nil, fmt.Errorf("error no valid netlink message found while parsing service record")
+		return nil, errors.New("error no valid netlink message found while parsing service record")
 	}
 
 	// Now Parse and get IPVS related attributes messages packed in this message.
@@ -545,14 +545,14 @@ func (i *Handle) parseDestination(msg []byte) (*Destination, error) {
 
 	// Remove General header for this message
 	if len(msg) < genlMsgHdrLen {
-		return nil, fmt.Errorf("invalid generic netlink response: message too short")
+		return nil, errors.New("invalid generic netlink response: message too short")
 	}
 	NetLinkAttrs, err := nl.ParseRouteAttr(msg[genlMsgHdrLen:])
 	if err != nil {
 		return nil, err
 	}
 	if len(NetLinkAttrs) == 0 {
-		return nil, fmt.Errorf("error no valid netlink message found while parsing destination record")
+		return nil, errors.New("error no valid netlink message found while parsing destination record")
 	}
 
 	// Now Parse and get IPVS related attributes messages packed in this message.
@@ -595,7 +595,7 @@ func (i *Handle) parseConfig(msg []byte) (*Config, error) {
 
 	// Remove General header for this message
 	if len(msg) < genlMsgHdrLen {
-		return nil, fmt.Errorf("invalid generic netlink response: message too short")
+		return nil, errors.New("invalid generic netlink response: message too short")
 	}
 	attrs, err := nl.ParseRouteAttr(msg[genlMsgHdrLen:])
 	if err != nil {
