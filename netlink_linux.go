@@ -147,7 +147,7 @@ func (i *Handle) doCmdwithResponse(s *Service, d *Destination, cmd uint8) ([][]b
 		req.AddData(fillDestination(d))
 	}
 
-	res, err := execute(i.sock, req, 0)
+	res, err := execute(i.sock, req)
 	if err != nil {
 		return [][]byte{}, err
 	}
@@ -171,7 +171,7 @@ func getIPVSFamily() (int, error) {
 	req := newGenlRequest(genlCtrlID, genlCtrlCmdGetFamily)
 	req.AddData(nl.NewRtAttr(genlCtrlAttrFamilyName, nl.ZeroTerminated("IPVS")))
 
-	msgs, err := execute(sock, req, 0)
+	msgs, err := execute(sock, req)
 	if err != nil {
 		return 0, err
 	}
@@ -218,7 +218,7 @@ func newGenlRequest(familyID int, cmd uint8) *nl.NetlinkRequest {
 	return req
 }
 
-func execute(s *nl.NetlinkSocket, req *nl.NetlinkRequest, resType uint16) ([][]byte, error) {
+func execute(s *nl.NetlinkSocket, req *nl.NetlinkRequest) ([][]byte, error) {
 	if err := s.Send(req); err != nil {
 		return nil, err
 	}
@@ -259,9 +259,6 @@ done:
 					break done
 				}
 				return nil, syscall.Errno(-error)
-			}
-			if resType != 0 && m.Header.Type != resType {
-				continue
 			}
 			res = append(res, m.Data)
 			if m.Header.Flags&syscall.NLM_F_MULTI == 0 {
@@ -431,7 +428,7 @@ func (i *Handle) doGetServicesCmd(svc *Service) ([]*Service, error) {
 func (i *Handle) doCmdWithoutAttr(cmd uint8) ([][]byte, error) {
 	req := newIPVSRequest(cmd)
 	req.Seq = atomic.AddUint32(&i.seq, 1)
-	return execute(i.sock, req, 0)
+	return execute(i.sock, req)
 }
 
 func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error) {
@@ -631,7 +628,7 @@ func (i *Handle) doSetConfigCmd(c *Config) error {
 	req.AddData(nl.NewRtAttr(ipvsCmdAttrTimeoutTCPFin, nl.Uint32Attr(uint32(c.TimeoutTCPFin.Seconds()))))
 	req.AddData(nl.NewRtAttr(ipvsCmdAttrTimeoutUDP, nl.Uint32Attr(uint32(c.TimeoutUDP.Seconds()))))
 
-	_, err := execute(i.sock, req, 0)
+	_, err := execute(i.sock, req)
 
 	return err
 }
