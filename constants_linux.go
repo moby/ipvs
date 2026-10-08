@@ -104,7 +104,7 @@ const (
 
 // Destination forwarding methods
 const (
-	// ConnectionFlagFwdmask indicates the mask in the connection
+	// ConnectionFlagFwdMask indicates the mask in the connection
 	// flags which is used by forwarding method bits.
 	ConnectionFlagFwdMask = 0x0007
 
