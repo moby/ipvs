@@ -12,7 +12,6 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
-	"unsafe"
 
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink/nl"
@@ -26,35 +25,48 @@ var (
 	ipvsOnce   sync.Once
 )
 
+// genlMsgHdrLen is the serialized size of genlMsgHdr. Keep this explicit
+// rather than deriving it with unsafe.Sizeof so the wire format does not
+// depend on the Go struct representation.
+const genlMsgHdrLen = 4
+
 type genlMsgHdr struct {
 	cmd      uint8
 	version  uint8
 	reserved uint16
 }
 
+// ipvsFlagsLen is the serialized size of ipvsFlags. Keep this explicit
+// rather than deriving it with unsafe.Sizeof so the wire format does not
+// depend on the Go struct representation.
+const ipvsFlagsLen = 8
+
 type ipvsFlags struct {
 	flags uint32
 	mask  uint32
 }
 
-func deserializeGenlMsg(b []byte) (hdr *genlMsgHdr) {
-	return (*genlMsgHdr)(unsafe.Pointer(&b[0:unsafe.Sizeof(*hdr)][0]))
-}
-
 func (hdr *genlMsgHdr) Serialize() []byte {
-	return (*(*[unsafe.Sizeof(*hdr)]byte)(unsafe.Pointer(hdr)))[:]
+	b := make([]byte, genlMsgHdrLen)
+	b[0] = hdr.cmd
+	b[1] = hdr.version
+	native.PutUint16(b[2:], hdr.reserved)
+	return b
 }
 
-func (hdr *genlMsgHdr) Len() int {
-	return int(unsafe.Sizeof(*hdr))
+func (*genlMsgHdr) Len() int {
+	return genlMsgHdrLen
 }
 
 func (f *ipvsFlags) Serialize() []byte {
-	return (*(*[unsafe.Sizeof(*f)]byte)(unsafe.Pointer(f)))[:]
+	b := make([]byte, ipvsFlagsLen)
+	native.PutUint32(b[0:], f.flags)
+	native.PutUint32(b[4:], f.mask)
+	return b
 }
 
-func (f *ipvsFlags) Len() int {
-	return int(unsafe.Sizeof(*f))
+func (*ipvsFlags) Len() int {
+	return ipvsFlagsLen
 }
 
 func setup() {
@@ -166,17 +178,23 @@ func getIPVSFamily() (int, error) {
 	}
 
 	for _, m := range msgs {
-		hdr := deserializeGenlMsg(m)
-		attrs, err := nl.ParseRouteAttr(m[hdr.Len():])
+		if len(m) < genlMsgHdrLen {
+			return 0, fmt.Errorf("invalid generic netlink response: message too short")
+		}
+
+		attrs, err := nl.ParseRouteAttr(m[genlMsgHdrLen:])
 		if err != nil {
 			return 0, err
 		}
 
 		for _, attr := range attrs {
-			switch int(attr.Attr.Type) {
-			case genlCtrlAttrFamilyID:
-				return int(native.Uint16(attr.Value[0:2])), nil
+			if int(attr.Attr.Type) != genlCtrlAttrFamilyID {
+				continue
 			}
+			if len(attr.Value) < 2 {
+				return 0, fmt.Errorf("invalid generic netlink response: family ID too short")
+			}
+			return int(native.Uint16(attr.Value[:2])), nil
 		}
 	}
 
@@ -363,8 +381,10 @@ func (i *Handle) parseService(msg []byte) (*Service, error) {
 	var s *Service
 
 	// Remove General header for this message and parse the NetLink message
-	hdr := deserializeGenlMsg(msg)
-	NetLinkAttrs, err := nl.ParseRouteAttr(msg[hdr.Len():])
+	if len(msg) < genlMsgHdrLen {
+		return nil, fmt.Errorf("invalid generic netlink response: message too short")
+	}
+	NetLinkAttrs, err := nl.ParseRouteAttr(msg[genlMsgHdrLen:])
 	if err != nil {
 		return nil, err
 	}
@@ -515,8 +535,10 @@ func (i *Handle) parseDestination(msg []byte) (*Destination, error) {
 	var dst *Destination
 
 	// Remove General header for this message
-	hdr := deserializeGenlMsg(msg)
-	NetLinkAttrs, err := nl.ParseRouteAttr(msg[hdr.Len():])
+	if len(msg) < genlMsgHdrLen {
+		return nil, fmt.Errorf("invalid generic netlink response: message too short")
+	}
+	NetLinkAttrs, err := nl.ParseRouteAttr(msg[genlMsgHdrLen:])
 	if err != nil {
 		return nil, err
 	}
@@ -563,8 +585,10 @@ func (i *Handle) parseConfig(msg []byte) (*Config, error) {
 	var c Config
 
 	// Remove General header for this message
-	hdr := deserializeGenlMsg(msg)
-	attrs, err := nl.ParseRouteAttr(msg[hdr.Len():])
+	if len(msg) < genlMsgHdrLen {
+		return nil, fmt.Errorf("invalid generic netlink response: message too short")
+	}
+	attrs, err := nl.ParseRouteAttr(msg[genlMsgHdrLen:])
 	if err != nil {
 		return nil, err
 	}
