@@ -102,8 +102,7 @@ func checkXfrmSocket() error {
 	if err != nil {
 		return err
 	}
-	unix.Close(fd)
-	return nil
+	return unix.Close(fd)
 }
 
 func loadNfConntrackModules() error {
@@ -122,6 +121,5 @@ func checkNfSocket() error {
 	if err != nil {
 		return err
 	}
-	unix.Close(fd)
-	return nil
+	return unix.Close(fd)
 }
