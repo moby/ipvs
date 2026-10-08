@@ -330,11 +330,9 @@ func assembleService(attrs []syscall.NetlinkRouteAttr) (*Service, error) {
 	var addressBytes []byte
 
 	for _, attr := range attrs {
-
-		attrType := int(attr.Attr.Type)
-
-		switch attrType {
-
+		switch int(attr.Attr.Type) {
+		case ipvsSvcAttrUnspec:
+			// unspecified
 		case ipvsSvcAttrAddressFamily:
 			s.AddressFamily = native.Uint16(attr.Value)
 		case ipvsSvcAttrProtocol:
@@ -353,6 +351,8 @@ func assembleService(attrs []syscall.NetlinkRouteAttr) (*Service, error) {
 			s.Timeout = native.Uint32(attr.Value)
 		case ipvsSvcAttrNetmask:
 			s.Netmask = native.Uint32(attr.Value)
+		case ipvsSvcAttrPEName:
+			s.PEName = nl.BytesToString(attr.Value)
 		case ipvsSvcAttrStats:
 			stats, err := assembleStats(attr.Value)
 			if err != nil {
@@ -360,7 +360,6 @@ func assembleService(attrs []syscall.NetlinkRouteAttr) (*Service, error) {
 			}
 			s.Stats = stats
 		}
-
 	}
 
 	// parse Address after parse AddressFamily incase of parseIP error
