@@ -50,64 +50,72 @@ const (
 
 // IPVS generic netlink command attributes.
 // See https://github.com/torvalds/linux/blob/v7.2/include/uapi/linux/ip_vs.h#L333-L343
+type ipvsCmdAttr int
+
 const (
-	ipvsCmdAttrUnspec        = 0 // IPVS_CMD_ATTR_UNSPEC
-	ipvsCmdAttrService       = 1 // IPVS_CMD_ATTR_SERVICE
-	ipvsCmdAttrDest          = 2 // IPVS_CMD_ATTR_DEST
-	ipvsCmdAttrDaemon        = 3 // IPVS_CMD_ATTR_DAEMON
-	ipvsCmdAttrTimeoutTCP    = 4 // IPVS_CMD_ATTR_TIMEOUT_TCP
-	ipvsCmdAttrTimeoutTCPFin = 5 // IPVS_CMD_ATTR_TIMEOUT_TCP_FIN
-	ipvsCmdAttrTimeoutUDP    = 6 // IPVS_CMD_ATTR_TIMEOUT_UDP
+	ipvsCmdAttrUnspec        ipvsCmdAttr = 0 // IPVS_CMD_ATTR_UNSPEC
+	ipvsCmdAttrService       ipvsCmdAttr = 1 // IPVS_CMD_ATTR_SERVICE
+	ipvsCmdAttrDest          ipvsCmdAttr = 2 // IPVS_CMD_ATTR_DEST
+	ipvsCmdAttrDaemon        ipvsCmdAttr = 3 // IPVS_CMD_ATTR_DAEMON
+	ipvsCmdAttrTimeoutTCP    ipvsCmdAttr = 4 // IPVS_CMD_ATTR_TIMEOUT_TCP
+	ipvsCmdAttrTimeoutTCPFin ipvsCmdAttr = 5 // IPVS_CMD_ATTR_TIMEOUT_TCP_FIN
+	ipvsCmdAttrTimeoutUDP    ipvsCmdAttr = 6 // IPVS_CMD_ATTR_TIMEOUT_UDP
 )
 
 // IPVS service attributes, nested in IPVS_CMD_ATTR_SERVICE.
 // See https://github.com/torvalds/linux/blob/v7.2/include/uapi/linux/ip_vs.h#L347-L372
+type ipvsSvcAttr int
+
 const (
-	ipvsSvcAttrUnspec        = 0  // IPVS_SVC_ATTR_UNSPEC
-	ipvsSvcAttrAddressFamily = 1  // IPVS_SVC_ATTR_AF
-	ipvsSvcAttrProtocol      = 2  // IPVS_SVC_ATTR_PROTOCOL
-	ipvsSvcAttrAddress       = 3  // IPVS_SVC_ATTR_ADDR
-	ipvsSvcAttrPort          = 4  // IPVS_SVC_ATTR_PORT
-	ipvsSvcAttrFWMark        = 5  // IPVS_SVC_ATTR_FWMARK
-	ipvsSvcAttrSchedName     = 6  // IPVS_SVC_ATTR_SCHED_NAME
-	ipvsSvcAttrFlags         = 7  // IPVS_SVC_ATTR_FLAGS
-	ipvsSvcAttrTimeout       = 8  // IPVS_SVC_ATTR_TIMEOUT
-	ipvsSvcAttrNetmask       = 9  // IPVS_SVC_ATTR_NETMASK
-	ipvsSvcAttrStats         = 10 // IPVS_SVC_ATTR_STATS
-	ipvsSvcAttrPEName        = 11 // IPVS_SVC_ATTR_PE_NAME
+	ipvsSvcAttrUnspec        ipvsSvcAttr = 0  // IPVS_SVC_ATTR_UNSPEC
+	ipvsSvcAttrAddressFamily ipvsSvcAttr = 1  // IPVS_SVC_ATTR_AF
+	ipvsSvcAttrProtocol      ipvsSvcAttr = 2  // IPVS_SVC_ATTR_PROTOCOL
+	ipvsSvcAttrAddress       ipvsSvcAttr = 3  // IPVS_SVC_ATTR_ADDR
+	ipvsSvcAttrPort          ipvsSvcAttr = 4  // IPVS_SVC_ATTR_PORT
+	ipvsSvcAttrFWMark        ipvsSvcAttr = 5  // IPVS_SVC_ATTR_FWMARK
+	ipvsSvcAttrSchedName     ipvsSvcAttr = 6  // IPVS_SVC_ATTR_SCHED_NAME
+	ipvsSvcAttrFlags         ipvsSvcAttr = 7  // IPVS_SVC_ATTR_FLAGS
+	ipvsSvcAttrTimeout       ipvsSvcAttr = 8  // IPVS_SVC_ATTR_TIMEOUT
+	ipvsSvcAttrNetmask       ipvsSvcAttr = 9  // IPVS_SVC_ATTR_NETMASK
+	ipvsSvcAttrStats         ipvsSvcAttr = 10 // IPVS_SVC_ATTR_STATS
+	ipvsSvcAttrPEName        ipvsSvcAttr = 11 // IPVS_SVC_ATTR_PE_NAME
 )
 
 // IPVS destination attributes, nested in IPVS_CMD_ATTR_DEST.
 // See https://github.com/torvalds/linux/blob/v7.2/include/uapi/linux/ip_vs.h#L376-L409
+type ipvsDestAttr int
+
 const (
-	ipvsDestAttrUnspec                = 0  // IPVS_DEST_ATTR_UNSPEC
-	ipvsDestAttrAddress               = 1  // IPVS_DEST_ATTR_ADDR
-	ipvsDestAttrPort                  = 2  // IPVS_DEST_ATTR_PORT
-	ipvsDestAttrForwardingMethod      = 3  // IPVS_DEST_ATTR_FWD_METHOD
-	ipvsDestAttrWeight                = 4  // IPVS_DEST_ATTR_WEIGHT
-	ipvsDestAttrUpperThreshold        = 5  // IPVS_DEST_ATTR_U_THRESH
-	ipvsDestAttrLowerThreshold        = 6  // IPVS_DEST_ATTR_L_THRESH
-	ipvsDestAttrActiveConnections     = 7  // IPVS_DEST_ATTR_ACTIVE_CONNS
-	ipvsDestAttrInactiveConnections   = 8  // IPVS_DEST_ATTR_INACT_CONNS
-	ipvsDestAttrPersistentConnections = 9  // IPVS_DEST_ATTR_PERSIST_CONNS
-	ipvsDestAttrStats                 = 10 // IPVS_DEST_ATTR_STATS
-	ipvsDestAttrAddressFamily         = 11 // IPVS_DEST_ATTR_ADDR_FAMILY
+	ipvsDestAttrUnspec                ipvsDestAttr = 0  // IPVS_DEST_ATTR_UNSPEC
+	ipvsDestAttrAddress               ipvsDestAttr = 1  // IPVS_DEST_ATTR_ADDR
+	ipvsDestAttrPort                  ipvsDestAttr = 2  // IPVS_DEST_ATTR_PORT
+	ipvsDestAttrForwardingMethod      ipvsDestAttr = 3  // IPVS_DEST_ATTR_FWD_METHOD
+	ipvsDestAttrWeight                ipvsDestAttr = 4  // IPVS_DEST_ATTR_WEIGHT
+	ipvsDestAttrUpperThreshold        ipvsDestAttr = 5  // IPVS_DEST_ATTR_U_THRESH
+	ipvsDestAttrLowerThreshold        ipvsDestAttr = 6  // IPVS_DEST_ATTR_L_THRESH
+	ipvsDestAttrActiveConnections     ipvsDestAttr = 7  // IPVS_DEST_ATTR_ACTIVE_CONNS
+	ipvsDestAttrInactiveConnections   ipvsDestAttr = 8  // IPVS_DEST_ATTR_INACT_CONNS
+	ipvsDestAttrPersistentConnections ipvsDestAttr = 9  // IPVS_DEST_ATTR_PERSIST_CONNS
+	ipvsDestAttrStats                 ipvsDestAttr = 10 // IPVS_DEST_ATTR_STATS
+	ipvsDestAttrAddressFamily         ipvsDestAttr = 11 // IPVS_DEST_ATTR_ADDR_FAMILY
 )
 
 // IPVS statistics attributes.
 // See https://github.com/torvalds/linux/blob/v7.2/include/uapi/linux/ip_vs.h#L433-L454
+type ipvsStats int
+
 const (
-	ipvsStatsUnspec   = 0  // IPVS_STATS_ATTR_UNSPEC
-	ipvsStatsConns    = 1  // IPVS_STATS_ATTR_CONNS
-	ipvsStatsPktsIn   = 2  // IPVS_STATS_ATTR_INPKTS
-	ipvsStatsPktsOut  = 3  // IPVS_STATS_ATTR_OUTPKTS
-	ipvsStatsBytesIn  = 4  // IPVS_STATS_ATTR_INBYTES
-	ipvsStatsBytesOut = 5  // IPVS_STATS_ATTR_OUTBYTES
-	ipvsStatsCPS      = 6  // IPVS_STATS_ATTR_CPS
-	ipvsStatsPPSIn    = 7  // IPVS_STATS_ATTR_INPPS
-	ipvsStatsPPSOut   = 8  // IPVS_STATS_ATTR_OUTPPS
-	ipvsStatsBPSIn    = 9  // IPVS_STATS_ATTR_INBPS
-	ipvsStatsBPSOut   = 10 // IPVS_STATS_ATTR_OUTBPS
+	ipvsStatsUnspec   ipvsStats = 0  // IPVS_STATS_ATTR_UNSPEC
+	ipvsStatsConns    ipvsStats = 1  // IPVS_STATS_ATTR_CONNS
+	ipvsStatsPktsIn   ipvsStats = 2  // IPVS_STATS_ATTR_INPKTS
+	ipvsStatsPktsOut  ipvsStats = 3  // IPVS_STATS_ATTR_OUTPKTS
+	ipvsStatsBytesIn  ipvsStats = 4  // IPVS_STATS_ATTR_INBYTES
+	ipvsStatsBytesOut ipvsStats = 5  // IPVS_STATS_ATTR_OUTBYTES
+	ipvsStatsCPS      ipvsStats = 6  // IPVS_STATS_ATTR_CPS
+	ipvsStatsPPSIn    ipvsStats = 7  // IPVS_STATS_ATTR_INPPS
+	ipvsStatsPPSOut   ipvsStats = 8  // IPVS_STATS_ATTR_OUTPPS
+	ipvsStatsBPSIn    ipvsStats = 9  // IPVS_STATS_ATTR_INBPS
+	ipvsStatsBPSOut   ipvsStats = 10 // IPVS_STATS_ATTR_OUTBPS
 )
 
 // Destination forwarding methods
