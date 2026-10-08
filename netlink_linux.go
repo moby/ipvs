@@ -273,18 +273,20 @@ done:
 }
 
 func parseIP(ip []byte, family uint16) (net.IP, error) {
-	var resIP net.IP
-
 	switch family {
 	case syscall.AF_INET:
-		resIP = (net.IP)(ip[:4])
+		if len(ip) < net.IPv4len {
+			return nil, fmt.Errorf("invalid IPv4 address: %d bytes", len(ip))
+		}
+		return ip[:net.IPv4len], nil
 	case syscall.AF_INET6:
-		resIP = (net.IP)(ip[:16])
+		if len(ip) < net.IPv6len {
+			return nil, fmt.Errorf("invalid IPv6 address: %d bytes", len(ip))
+		}
+		return ip[:net.IPv6len], nil
 	default:
-		return nil, fmt.Errorf("parseIP Error ip=%v", ip)
-
+		return nil, fmt.Errorf("unsupported address family: %d", family)
 	}
-	return resIP, nil
 }
 
 // parseStats
