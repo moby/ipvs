@@ -451,7 +451,7 @@ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error)
 		case ipvsDestAttrForwardingMethod:
 			d.ConnectionFlags = native.Uint32(attr.Value)
 		case ipvsDestAttrWeight:
-			d.Weight = int(native.Uint16(attr.Value))
+			d.Weight = int(native.Uint32(attr.Value))
 		case ipvsDestAttrUpperThreshold:
 			d.UpperThreshold = native.Uint32(attr.Value)
 		case ipvsDestAttrLowerThreshold:
