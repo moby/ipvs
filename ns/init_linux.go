@@ -48,7 +48,7 @@ func SetNamespace() error {
 		if linkErr != nil {
 			linkInfo = linkErr.Error()
 		}
-		return fmt.Errorf("failed to set to initial namespace, %v, initns fd %d: %v", linkInfo, initNs, err)
+		return fmt.Errorf("failed to set to initial namespace, %v, initns fd %d: %w", linkInfo, initNs, err)
 	}
 	return nil
 }
@@ -102,16 +102,15 @@ func checkXfrmSocket() error {
 	if err != nil {
 		return err
 	}
-	unix.Close(fd)
-	return nil
+	return unix.Close(fd)
 }
 
 func loadNfConntrackModules() error {
 	if out, err := exec.Command("modprobe", "-va", "nf_conntrack").CombinedOutput(); err != nil {
-		return fmt.Errorf("Running modprobe nf_conntrack failed with message: `%s`, error: %v", strings.TrimSpace(string(out)), err)
+		return fmt.Errorf("running modprobe nf_conntrack failed with message: `%s`, error: %w", strings.TrimSpace(string(out)), err)
 	}
 	if out, err := exec.Command("modprobe", "-va", "nf_conntrack_netlink").CombinedOutput(); err != nil {
-		return fmt.Errorf("Running modprobe nf_conntrack_netlink failed with message: `%s`, error: %v", strings.TrimSpace(string(out)), err)
+		return fmt.Errorf("running modprobe nf_conntrack_netlink failed with message: `%s`, error: %w", strings.TrimSpace(string(out)), err)
 	}
 	return nil
 }
@@ -122,6 +121,5 @@ func checkNfSocket() error {
 	if err != nil {
 		return err
 	}
-	unix.Close(fd)
-	return nil
+	return unix.Close(fd)
 }

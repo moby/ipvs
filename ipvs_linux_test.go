@@ -229,6 +229,7 @@ func TestService(t *testing.T) {
 	}
 	// Create services for testing flush
 	for _, svc := range svcs {
+		svc := svc
 		if !i.IsServicePresent(&svc) {
 			err = i.NewService(&svc)
 			if err != nil {
@@ -363,6 +364,7 @@ func TestDestination(t *testing.T) {
 						continue
 					}
 					for _, d := range destinations {
+						d := d
 						d.ConnectionFlags = updateFwdMethod
 						err = i.UpdateDestination(&s, &d)
 						if err != nil {
@@ -372,6 +374,7 @@ func TestDestination(t *testing.T) {
 					}
 				}
 				for _, d := range destinations {
+					d := d
 					err = i.DelDestination(&s, &d)
 					if err != nil {
 						t.Fatal("Failed to delete destination:", err)
