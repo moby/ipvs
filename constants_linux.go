@@ -25,25 +25,27 @@ const (
 
 // IPVS generic netlink commands.
 // See https://github.com/torvalds/linux/blob/v7.2/include/uapi/linux/ip_vs.h#L301-L329
+type ipvsCmd uint8
+
 const (
-	ipvsCmdUnspec     = 0  // IPVS_CMD_UNSPEC
-	ipvsCmdNewService = 1  // IPVS_CMD_NEW_SERVICE
-	ipvsCmdSetService = 2  // IPVS_CMD_SET_SERVICE
-	ipvsCmdDelService = 3  // IPVS_CMD_DEL_SERVICE
-	ipvsCmdGetService = 4  // IPVS_CMD_GET_SERVICE
-	ipvsCmdNewDest    = 5  // IPVS_CMD_NEW_DEST
-	ipvsCmdSetDest    = 6  // IPVS_CMD_SET_DEST
-	ipvsCmdDelDest    = 7  // IPVS_CMD_DEL_DEST
-	ipvsCmdGetDest    = 8  // IPVS_CMD_GET_DEST
-	ipvsCmdNewDaemon  = 9  // IPVS_CMD_NEW_DAEMON
-	ipvsCmdDelDaemon  = 10 // IPVS_CMD_DEL_DAEMON
-	ipvsCmdGetDaemon  = 11 // IPVS_CMD_GET_DAEMON
-	ipvsCmdSetConfig  = 12 // IPVS_CMD_SET_CONFIG
-	ipvsCmdGetConfig  = 13 // IPVS_CMD_GET_CONFIG
-	ipvsCmdSetInfo    = 14 // IPVS_CMD_SET_INFO
-	ipvsCmdGetInfo    = 15 // IPVS_CMD_GET_INFO
-	ipvsCmdZero       = 16 // IPVS_CMD_ZERO
-	ipvsCmdFlush      = 17 // IPVS_CMD_FLUSH
+	ipvsCmdUnspec     ipvsCmd = 0  // IPVS_CMD_UNSPEC
+	ipvsCmdNewService ipvsCmd = 1  // IPVS_CMD_NEW_SERVICE
+	ipvsCmdSetService ipvsCmd = 2  // IPVS_CMD_SET_SERVICE
+	ipvsCmdDelService ipvsCmd = 3  // IPVS_CMD_DEL_SERVICE
+	ipvsCmdGetService ipvsCmd = 4  // IPVS_CMD_GET_SERVICE
+	ipvsCmdNewDest    ipvsCmd = 5  // IPVS_CMD_NEW_DEST
+	ipvsCmdSetDest    ipvsCmd = 6  // IPVS_CMD_SET_DEST
+	ipvsCmdDelDest    ipvsCmd = 7  // IPVS_CMD_DEL_DEST
+	ipvsCmdGetDest    ipvsCmd = 8  // IPVS_CMD_GET_DEST
+	ipvsCmdNewDaemon  ipvsCmd = 9  // IPVS_CMD_NEW_DAEMON
+	ipvsCmdDelDaemon  ipvsCmd = 10 // IPVS_CMD_DEL_DAEMON
+	ipvsCmdGetDaemon  ipvsCmd = 11 // IPVS_CMD_GET_DAEMON
+	ipvsCmdSetConfig  ipvsCmd = 12 // IPVS_CMD_SET_CONFIG
+	ipvsCmdGetConfig  ipvsCmd = 13 // IPVS_CMD_GET_CONFIG
+	ipvsCmdSetInfo    ipvsCmd = 14 // IPVS_CMD_SET_INFO
+	ipvsCmdGetInfo    ipvsCmd = 15 // IPVS_CMD_GET_INFO
+	ipvsCmdZero       ipvsCmd = 16 // IPVS_CMD_ZERO
+	ipvsCmdFlush      ipvsCmd = 17 // IPVS_CMD_FLUSH
 )
 
 // IPVS generic netlink command attributes.

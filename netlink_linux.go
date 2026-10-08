@@ -132,7 +132,7 @@ func fillDestination(d *Destination) (nl.NetlinkRequestData, error) {
 	return cmdAttr, nil
 }
 
-func (i *Handle) doCmdwithResponse(s *Service, d *Destination, cmd uint8) ([][]byte, error) {
+func (i *Handle) doCmdwithResponse(s *Service, d *Destination, cmd ipvsCmd) ([][]byte, error) {
 	req := newIPVSRequest(cmd)
 	req.Seq = atomic.AddUint32(&i.seq, 1)
 
@@ -163,7 +163,7 @@ func (i *Handle) doCmdwithResponse(s *Service, d *Destination, cmd uint8) ([][]b
 	return res, nil
 }
 
-func (i *Handle) doCmd(s *Service, d *Destination, cmd uint8) error {
+func (i *Handle) doCmd(s *Service, d *Destination, cmd ipvsCmd) error {
 	_, err := i.doCmdwithResponse(s, d, cmd)
 
 	return err
@@ -216,8 +216,8 @@ func rawIPData(ip net.IP) []byte {
 	return ip
 }
 
-func newIPVSRequest(cmd uint8) *nl.NetlinkRequest {
-	return newGenlRequest(ipvsFamily, cmd)
+func newIPVSRequest(cmd ipvsCmd) *nl.NetlinkRequest {
+	return newGenlRequest(ipvsFamily, uint8(cmd))
 }
 
 func newGenlRequest(familyID int, cmd uint8) *nl.NetlinkRequest {
@@ -437,7 +437,7 @@ func (i *Handle) doGetServicesCmd(svc *Service) ([]*Service, error) {
 }
 
 // doCmdWithoutAttr a simple wrapper of netlink socket execute command
-func (i *Handle) doCmdWithoutAttr(cmd uint8) ([][]byte, error) {
+func (i *Handle) doCmdWithoutAttr(cmd ipvsCmd) ([][]byte, error) {
 	req := newIPVSRequest(cmd)
 	req.Seq = atomic.AddUint32(&i.seq, 1)
 	return execute(i.sock, req)
