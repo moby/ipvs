@@ -438,11 +438,9 @@ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error)
 	var addressBytes []byte
 
 	for _, attr := range attrs {
-
-		attrType := int(attr.Attr.Type)
-
-		switch attrType {
-
+		switch int(attr.Attr.Type) {
+		case ipvsDestAttrUnspec:
+			// unspecified
 		case ipvsDestAttrAddressFamily:
 			d.AddressFamily = native.Uint16(attr.Value)
 		case ipvsDestAttrAddress:
@@ -461,6 +459,8 @@ func assembleDestination(attrs []syscall.NetlinkRouteAttr) (*Destination, error)
 			d.ActiveConnections = int(native.Uint32(attr.Value))
 		case ipvsDestAttrInactiveConnections:
 			d.InactiveConnections = int(native.Uint32(attr.Value))
+		case ipvsDestAttrPersistentConnections:
+			d.PersistentConnections = int(native.Uint32(attr.Value))
 		case ipvsDestAttrStats:
 			stats, err := assembleStats(attr.Value)
 			if err != nil {
