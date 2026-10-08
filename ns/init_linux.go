@@ -48,7 +48,7 @@ func SetNamespace() error {
 		if linkErr != nil {
 			linkInfo = linkErr.Error()
 		}
-		return fmt.Errorf("failed to set to initial namespace, %v, initns fd %d: %v", linkInfo, initNs, err)
+		return fmt.Errorf("failed to set to initial namespace, %v, initns fd %d: %w", linkInfo, initNs, err)
 	}
 	return nil
 }
