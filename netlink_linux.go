@@ -307,8 +307,9 @@ func assembleStats(msg []byte) (SvcStats, error) {
 	}
 
 	for _, attr := range attrs {
-		attrType := int(attr.Attr.Type)
-		switch attrType {
+		switch int(attr.Attr.Type) {
+		case ipvsStatsUnspec:
+			// unspecified
 		case ipvsStatsConns:
 			s.Connections = native.Uint32(attr.Value)
 		case ipvsStatsPktsIn:
@@ -602,14 +603,17 @@ func (i *Handle) parseConfig(msg []byte) (*Config, error) {
 	}
 
 	for _, attr := range attrs {
-		attrType := int(attr.Attr.Type)
-		switch attrType {
+		switch int(attr.Attr.Type) {
+		case ipvsCmdAttrUnspec:
+			// unspecified
 		case ipvsCmdAttrTimeoutTCP:
 			c.TimeoutTCP = time.Duration(native.Uint32(attr.Value)) * time.Second
 		case ipvsCmdAttrTimeoutTCPFin:
 			c.TimeoutTCPFin = time.Duration(native.Uint32(attr.Value)) * time.Second
 		case ipvsCmdAttrTimeoutUDP:
 			c.TimeoutUDP = time.Duration(native.Uint32(attr.Value)) * time.Second
+		case ipvsCmdAttrService, ipvsCmdAttrDest, ipvsCmdAttrDaemon:
+			// not implemented
 		}
 	}
 
