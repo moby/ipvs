@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink/nl"
 	"github.com/vishvananda/netns"
+	"golang.org/x/sys/unix"
 )
 
 // For Quick Reference IPVS related netlink message is described at the end of this file.
@@ -210,7 +211,7 @@ func getIPVSFamily() (int, error) {
 
 func rawIPData(ip net.IP) []byte {
 	family := nl.GetIPFamily(ip)
-	if family == nl.FAMILY_V4 {
+	if family == unix.AF_INET {
 		return ip.To4()
 	}
 	return ip

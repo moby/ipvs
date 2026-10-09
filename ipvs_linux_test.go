@@ -10,7 +10,6 @@ import (
 
 	"github.com/moby/ipvs/ns"
 	"github.com/vishvananda/netlink"
-	"github.com/vishvananda/netlink/nl"
 	"golang.org/x/sys/unix"
 )
 
@@ -137,11 +136,11 @@ func TestService(t *testing.T) {
 				Netmask       uint32
 			}{
 				{
-					AddressFamily: nl.FAMILY_V4,
+					AddressFamily: unix.AF_INET,
 					IP:            "1.2.3.4",
 					Netmask:       0xFFFFFFFF,
 				}, {
-					AddressFamily: nl.FAMILY_V6,
+					AddressFamily: unix.AF_INET6,
 					IP:            "2001:db8:3c4d:15::1a00",
 					Netmask:       128,
 				},
@@ -211,7 +210,7 @@ func TestService(t *testing.T) {
 
 	svcs := []Service{
 		{
-			AddressFamily: nl.FAMILY_V4,
+			AddressFamily: unix.AF_INET,
 			SchedName:     RoundRobin,
 			Protocol:      unix.IPPROTO_TCP,
 			Port:          80,
@@ -219,7 +218,7 @@ func TestService(t *testing.T) {
 			Netmask:       0xFFFFFFFF,
 		},
 		{
-			AddressFamily: nl.FAMILY_V4,
+			AddressFamily: unix.AF_INET,
 			SchedName:     LeastConnection,
 			Protocol:      unix.IPPROTO_UDP,
 			Port:          8080,
@@ -300,12 +299,12 @@ func TestDestination(t *testing.T) {
 			Destinations  []string
 		}{
 			{
-				AddressFamily: nl.FAMILY_V4,
+				AddressFamily: unix.AF_INET,
 				IP:            "1.2.3.4",
 				Netmask:       0xFFFFFFFF,
 				Destinations:  []string{"10.1.1.2", "10.1.1.3", "10.1.1.4"},
 			}, {
-				AddressFamily: nl.FAMILY_V6,
+				AddressFamily: unix.AF_INET6,
 				IP:            "2001:db8:3c4d:15::1a00",
 				Netmask:       128,
 				Destinations:  []string{"2001:db8:3c4d:15::1a2b", "2001:db8:3c4d:15::1a2c", "2001:db8:3c4d:15::1a2d"},
