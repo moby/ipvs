@@ -34,19 +34,18 @@ func Test_getIPFamily(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testcase := testcase
-		t.Run(testcase.name, func(t *testing.T) {
-			family, err := getIPFamily(testcase.address)
-			if !reflect.DeepEqual(err, testcase.expectedErr) {
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			family, err := getIPFamily(tc.address)
+			if !reflect.DeepEqual(err, tc.expectedErr) {
 				t.Logf("got err: %v", err)
-				t.Logf("expected err: %v", testcase.expectedErr)
+				t.Logf("expected err: %v", tc.expectedErr)
 				t.Errorf("unexpected error")
 			}
 
-			if family != testcase.expectedFamily {
+			if family != tc.expectedFamily {
 				t.Logf("got IP family: %v", family)
-				t.Logf("expected IP family: %v", testcase.expectedFamily)
+				t.Logf("expected IP family: %v", tc.expectedFamily)
 				t.Errorf("unexpected IP family")
 			}
 		})
