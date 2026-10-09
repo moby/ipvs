@@ -118,26 +118,27 @@ const (
 	ipvsStatsBPSOut   ipvsStats = 10 // IPVS_STATS_ATTR_OUTBPS
 )
 
-// Destination forwarding methods
+// Deprecated forwarding method names retained for compatibility.
 const (
-	// ConnectionFlagFwdMask indicates the mask in the connection
-	// flags which is used by forwarding method bits.
-	ConnectionFlagFwdMask = 0x0007
+	// ConnectionFlagFwdMask is an alias for ConnFwdMask.
+	// Deprecated: Use ConnFwdMask instead.
+	ConnectionFlagFwdMask = ConnFwdMask
 
-	// ConnectionFlagMasq is used for masquerade forwarding method.
-	ConnectionFlagMasq = 0x0000
+	// ConnectionFlagMasq is an alias for ConnFwdMasq.
+	// Deprecated: Use ConnFwdMasq instead.
+	ConnectionFlagMasq = ConnFwdMasq
 
-	// ConnectionFlagLocalNode is used for local node forwarding
-	// method.
-	ConnectionFlagLocalNode = 0x0001
+	// ConnectionFlagLocalNode is an alias for ConnFwdLocalNode.
+	// Deprecated: Use ConnFwdLocalNode instead.
+	ConnectionFlagLocalNode = ConnFwdLocalNode
 
-	// ConnectionFlagTunnel is used for tunnel mode forwarding
-	// method.
-	ConnectionFlagTunnel = 0x0002
+	// ConnectionFlagTunnel is an alias for ConnFwdTunnel.
+	// Deprecated: Use ConnFwdTunnel instead.
+	ConnectionFlagTunnel = ConnFwdTunnel
 
-	// ConnectionFlagDirectRoute is used for direct routing
-	// forwarding method.
-	ConnectionFlagDirectRoute = 0x0003
+	// ConnectionFlagDirectRoute is an alias for ConnFwdDirectRoute.
+	// Deprecated: Use ConnFwdDirectRoute instead.
+	ConnectionFlagDirectRoute = ConnFwdDirectRoute
 )
 
 const (
@@ -171,22 +172,30 @@ const (
 	WeightedLeastConnection = "wlc"
 )
 
+// Destination forwarding methods.
+// See https://github.com/torvalds/linux/blob/v7.2/include/uapi/linux/ip_vs.h#L72-L132
 const (
-	// ConnFwdMask is a mask for the fwd methods
+	// ConnFwdMask is the mask for the forwarding method bits.
+	// Corresponds to IP_VS_CONN_F_FWD_MASK.
 	ConnFwdMask = 0x0007
 
-	// ConnFwdMasq denotes forwarding via masquerading/NAT
+	// ConnFwdMasq denotes forwarding via masquerading/NAT.
+	// Corresponds to IP_VS_CONN_F_MASQ.
 	ConnFwdMasq = 0x0000
 
-	// ConnFwdLocalNode denotes forwarding to a local node
+	// ConnFwdLocalNode denotes forwarding to a local node.
+	// Corresponds to IP_VS_CONN_F_LOCALNODE.
 	ConnFwdLocalNode = 0x0001
 
-	// ConnFwdTunnel denotes forwarding via a tunnel
+	// ConnFwdTunnel denotes forwarding via a tunnel.
+	// Corresponds to IP_VS_CONN_F_TUNNEL.
 	ConnFwdTunnel = 0x0002
 
-	// ConnFwdDirectRoute denotes forwarding via direct routing
+	// ConnFwdDirectRoute denotes forwarding via direct routing.
+	// Corresponds to IP_VS_CONN_F_DROUTE.
 	ConnFwdDirectRoute = 0x0003
 
-	// ConnFwdBypass denotes forwarding while bypassing the cache
+	// ConnFwdBypass denotes forwarding while bypassing the cache.
+	// Corresponds to IP_VS_CONN_F_BYPASS.
 	ConnFwdBypass = 0x0004
 )

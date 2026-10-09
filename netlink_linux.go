@@ -124,7 +124,7 @@ func fillDestination(d *Destination) (nl.NetlinkRequestData, error) {
 	var portBuf bytes.Buffer
 	_ = binary.Write(&portBuf, binary.BigEndian, d.Port)
 	cmdAttr.AddRtAttr(int(ipvsDestAttrPort), portBuf.Bytes())
-	cmdAttr.AddRtAttr(int(ipvsDestAttrForwardingMethod), nl.Uint32Attr(d.ConnectionFlags&ConnectionFlagFwdMask))
+	cmdAttr.AddRtAttr(int(ipvsDestAttrForwardingMethod), nl.Uint32Attr(d.ConnectionFlags&ConnFwdMask))
 	cmdAttr.AddRtAttr(int(ipvsDestAttrWeight), nl.Uint32Attr(uint32(d.Weight)))
 	cmdAttr.AddRtAttr(int(ipvsDestAttrUpperThreshold), nl.Uint32Attr(d.UpperThreshold))
 	cmdAttr.AddRtAttr(int(ipvsDestAttrLowerThreshold), nl.Uint32Attr(d.LowerThreshold))

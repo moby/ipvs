@@ -31,28 +31,28 @@ var (
 	}
 
 	fwdMethods = []uint32{
-		ConnectionFlagMasq,
-		ConnectionFlagTunnel,
-		ConnectionFlagDirectRoute,
-	}
-
-	fwdMethodStrings = []string{
-		"Masq",
-		"Tunnel",
-		"Route",
+		ConnFwdMasq,
+		ConnFwdTunnel,
+		ConnFwdDirectRoute,
+		ConnFwdBypass,
 	}
 )
 
 func lookupFwMethod(fwMethod uint32) string {
 	switch fwMethod {
-	case ConnectionFlagMasq:
-		return fwdMethodStrings[0]
-	case ConnectionFlagTunnel:
-		return fwdMethodStrings[1]
-	case ConnectionFlagDirectRoute:
-		return fwdMethodStrings[2]
+	case ConnFwdMasq:
+		return "Masq"
+	case ConnFwdLocalNode:
+		return "Local"
+	case ConnFwdTunnel:
+		return "Tunnel"
+	case ConnFwdDirectRoute:
+		return "Route"
+	case ConnFwdBypass:
+		return "Bypass"
+	default:
+		return ""
 	}
-	return ""
 }
 
 func checkDestination(t *testing.T, i *Handle, s *Service, d *Destination, checkPresent bool) {
