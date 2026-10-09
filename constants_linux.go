@@ -141,6 +141,9 @@ const (
 	ConnectionFlagDirectRoute = ConnFwdDirectRoute
 )
 
+// IPVS scheduler names.
+// These correspond to the names registered by the Linux IPVS schedulers.
+// See https://github.com/torvalds/linux/tree/v7.2/net/netfilter/ipvs
 const (
 	// RoundRobin distributes jobs equally amongst the available
 	// real servers.
