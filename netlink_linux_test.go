@@ -224,3 +224,116 @@ func Test_AssembleDestination(t *testing.T) {
 		})
 	}
 }
+
+func Test_AssembleStats(t *testing.T) {
+	tests := []struct {
+		name  string
+		attr  ipvsStats
+		value []byte
+		want  SvcStats
+	}{
+		{
+			name:  "connections",
+			attr:  ipvsStatsConns,
+			value: nl.Uint32Attr(65536),
+			want:  SvcStats{Connections: 65536},
+		},
+		{
+			name:  "packets in",
+			attr:  ipvsStatsPktsIn,
+			value: nl.Uint32Attr(123456),
+			want:  SvcStats{PacketsIn: 123456},
+		},
+		{
+			name:  "packets out",
+			attr:  ipvsStatsPktsOut,
+			value: nl.Uint32Attr(234567),
+			want:  SvcStats{PacketsOut: 234567},
+		},
+		{
+			name:  "bytes in",
+			attr:  ipvsStatsBytesIn,
+			value: nl.Uint64Attr(1 << 40),
+			want:  SvcStats{BytesIn: 1 << 40},
+		},
+		{
+			name:  "bytes out",
+			attr:  ipvsStatsBytesOut,
+			value: nl.Uint64Attr(1 << 41),
+			want:  SvcStats{BytesOut: 1 << 41},
+		},
+		{
+			name:  "connections per second",
+			attr:  ipvsStatsCPS,
+			value: nl.Uint32Attr(100),
+			want:  SvcStats{CPS: 100},
+		},
+		{
+			name:  "packets in per second",
+			attr:  ipvsStatsPPSIn,
+			value: nl.Uint32Attr(200),
+			want:  SvcStats{PPSIn: 200},
+		},
+		{
+			name:  "packets out per second",
+			attr:  ipvsStatsPPSOut,
+			value: nl.Uint32Attr(300),
+			want:  SvcStats{PPSOut: 300},
+		},
+		{
+			name:  "bytes in per second",
+			attr:  ipvsStatsBPSIn,
+			value: nl.Uint32Attr(400),
+			want:  SvcStats{BPSIn: 400},
+		},
+		{
+			name:  "bytes out per second",
+			attr:  ipvsStatsBPSOut,
+			value: nl.Uint32Attr(500),
+			want:  SvcStats{BPSOut: 500},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			attr := nl.NewRtAttr(int(tc.attr), tc.value)
+
+			got, err := assembleStats(attr.Serialize())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("assembleStats() = %+v, want %+v", got, tc.want)
+			}
+		})
+	}
+
+	t.Run("unknown attribute", func(t *testing.T) {
+		// Unknown attributes must not prevent subsequent attributes
+		// from being decoded.
+		unknown := nl.NewRtAttr(unknownAttrType, []byte{1, 2, 3, 4})
+		known := nl.NewRtAttr(int(ipvsStatsConns), nl.Uint32Attr(123))
+
+		msg := append(unknown.Serialize(), known.Serialize()...)
+		got, err := assembleStats(msg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := SvcStats{Connections: 123}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("assembleStats() = %+v, want %+v", got, want)
+		}
+	})
+
+	t.Run("malformed attribute", func(t *testing.T) {
+		// The attribute header claims more bytes than are available.
+		msg := make([]byte, 4)
+		native.PutUint16(msg[:2], 8)
+		native.PutUint16(msg[2:], uint16(ipvsStatsConns))
+
+		_, err := assembleStats(msg)
+		if err == nil {
+			t.Fatal("assembleStats() expected an error for malformed attribute")
+		}
+	})
+}
