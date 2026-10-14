@@ -3,8 +3,6 @@ package ns
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 	"sync"
 	"time"
 
@@ -76,20 +74,11 @@ func NlHandle() *netlink.Handle {
 
 func getSupportedNlFamilies() []int {
 	fams := []int{unix.NETLINK_ROUTE}
-	// NETLINK_XFRM test
-	if err := checkXfrmSocket(); err != nil {
-		logrus.Warnf("Could not load necessary modules for IPSEC rules: %v", err)
-	} else {
+
+	if err := checkXfrmSocket(); err == nil {
 		fams = append(fams, unix.NETLINK_XFRM)
 	}
-	// NETLINK_NETFILTER test
-	if err := loadNfConntrackModules(); err != nil {
-		if checkNfSocket() != nil {
-			logrus.Warnf("Could not load necessary modules for Conntrack: %v", err)
-		} else {
-			fams = append(fams, unix.NETLINK_NETFILTER)
-		}
-	} else {
+	if err := checkNfSocket(); err == nil {
 		fams = append(fams, unix.NETLINK_NETFILTER)
 	}
 
@@ -103,16 +92,6 @@ func checkXfrmSocket() error {
 		return err
 	}
 	return unix.Close(fd)
-}
-
-func loadNfConntrackModules() error {
-	if out, err := exec.Command("modprobe", "-va", "nf_conntrack").CombinedOutput(); err != nil {
-		return fmt.Errorf("running modprobe nf_conntrack failed with message: `%s`, error: %w", strings.TrimSpace(string(out)), err)
-	}
-	if out, err := exec.Command("modprobe", "-va", "nf_conntrack_netlink").CombinedOutput(); err != nil {
-		return fmt.Errorf("running modprobe nf_conntrack_netlink failed with message: `%s`, error: %w", strings.TrimSpace(string(out)), err)
-	}
-	return nil
 }
 
 // API check on required nf_conntrack* modules (nf_conntrack, nf_conntrack_netlink)
