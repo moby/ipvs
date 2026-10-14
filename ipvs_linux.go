@@ -93,8 +93,8 @@ func New(path string) (*Handle, error) {
 		if err != nil {
 			return nil, err
 		}
+		defer func() { _ = n.Close() }()
 	}
-	defer n.Close()
 
 	sock, err := nl.GetNetlinkSocketAt(n, netns.None(), unix.NETLINK_GENERIC)
 	if err != nil {
