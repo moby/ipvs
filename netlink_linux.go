@@ -8,24 +8,18 @@ import (
 	"math"
 	"net"
 	"os/exec"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink/nl"
 	"github.com/vishvananda/netns"
 	"golang.org/x/sys/unix"
 )
 
 // For Quick Reference IPVS related netlink message is described at the end of this file.
-var (
-	native     = nl.NativeEndian()
-	ipvsFamily int
-	ipvsOnce   sync.Once
-)
+var native = nl.NativeEndian()
 
 // genlMsgHdrLen is the serialized size of genlMsgHdr. Keep this explicit
 // rather than deriving it with unsafe.Sizeof so the wire format does not
@@ -71,19 +65,27 @@ func (*ipvsFlags) Len() int {
 	return ipvsFlagsLen
 }
 
-func setup() {
-	ipvsOnce.Do(func() {
-		var err error
-		if out, err := exec.Command("modprobe", "-va", "ip_vs").CombinedOutput(); err != nil {
-			logrus.Warnf("Running modprobe ip_vs failed with message: `%s`, error: %v", strings.TrimSpace(string(out)), err)
-		}
+// ipvsFamily lazily discovers and caches the IPVS generic-netlink family ID
+// and any initialization error.
+var ipvsFamily = sync.OnceValues(func() (int, error) {
+	family, err := getIPVSFamily()
+	if err == nil {
+		return family, nil
+	}
 
-		ipvsFamily, err = getIPVSFamily()
-		if err != nil {
-			logrus.Error("Could not get ipvs family information from the kernel. It is possible that ipvs is not enabled in your kernel. Native loadbalancing will not work until this is fixed.")
-		}
-	})
-}
+	// Linux 5.17 added automatic loading of ip_vs through generic-netlink
+	// family discovery. Older kernels, including RHEL 8's 4.18 kernel,
+	// may still require explicit module loading.
+	//
+	// See https://lists.openwall.net/netdev/2021/11/01/229
+	_, _ = exec.Command("modprobe", "-va", "ip_vs").CombinedOutput()
+
+	family, err = getIPVSFamily()
+	if err != nil {
+		return 0, fmt.Errorf("get IPVS generic-netlink family: %w", err)
+	}
+	return family, nil
+})
 
 func fillService(s *Service) nl.NetlinkRequestData {
 	cmdAttr := nl.NewRtAttr(int(ipvsCmdAttrService), nil)
@@ -218,7 +220,8 @@ func rawIPData(ip net.IP) []byte {
 }
 
 func newIPVSRequest(cmd ipvsCmd) *nl.NetlinkRequest {
-	return newGenlRequest(ipvsFamily, uint8(cmd))
+	family, _ := ipvsFamily()
+	return newGenlRequest(family, uint8(cmd))
 }
 
 func newGenlRequest(familyID int, cmd uint8) *nl.NetlinkRequest {
