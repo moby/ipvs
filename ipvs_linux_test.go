@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moby/ipvs/ns"
 	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netns"
 	"golang.org/x/sys/unix"
 )
 
@@ -427,8 +427,11 @@ func TestTimeouts(t *testing.T) {
 	}
 }
 
-// setupTestOSContext joins a new network namespace, and returns its associated
-// teardown function.
+// setupTestOSContext creates a new network namespace for the calling OS thread
+// and returns a function that restores the original namespace.
+//
+// The caller must defer the returned function to ensure that namespace
+// restoration and thread unlocking happen on the same OS thread.
 //
 // Example usage:
 //
@@ -436,24 +439,27 @@ func TestTimeouts(t *testing.T) {
 func setupTestOSContext(t *testing.T) func() {
 	t.Helper()
 	runtime.LockOSThread()
-	if err := syscall.Unshare(syscall.CLONE_NEWNET); err != nil {
-		t.Fatalf("Failed to enter netns: %v", err)
-	}
 
-	fd, err := syscall.Open("/proc/self/ns/net", syscall.O_RDONLY, 0)
+	originalNS, err := netns.Get()
 	if err != nil {
-		t.Fatal("Failed to open netns file:", err)
+		runtime.UnlockOSThread()
+		t.Fatal("failed to get original network namespace:", err)
 	}
 
-	// Since we are switching to a new test namespace make
-	// sure to re-initialize initNs context
-	ns.Init()
-
-	runtime.LockOSThread()
+	if err := syscall.Unshare(syscall.CLONE_NEWNET); err != nil {
+		_ = originalNS.Close()
+		runtime.UnlockOSThread()
+		t.Fatal("failed to create network namespace:", err)
+	}
 
 	return func() {
-		if err := syscall.Close(fd); err != nil {
-			t.Logf("Warning: netns closing failed (%v)", err)
+		defer originalNS.Close()
+
+		if err := netns.Set(originalNS); err != nil {
+			// Do not unlock the thread if namespace restoration fails.
+			// The Go runtime will terminate the locked thread when the
+			// goroutine exits instead of reusing it in the wrong namespace.
+			t.Fatalf("failed to restore network namespace: %v", err)
 		}
 		runtime.UnlockOSThread()
 	}
