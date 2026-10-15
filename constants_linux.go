@@ -121,23 +121,33 @@ const (
 // Deprecated forwarding method names retained for compatibility.
 const (
 	// ConnectionFlagFwdMask is an alias for ConnFwdMask.
+	//
 	// Deprecated: Use ConnFwdMask instead.
+	//go:fix inline
 	ConnectionFlagFwdMask = ConnFwdMask
 
 	// ConnectionFlagMasq is an alias for ConnFwdMasq.
+	//
 	// Deprecated: Use ConnFwdMasq instead.
+	//go:fix inline
 	ConnectionFlagMasq = ConnFwdMasq
 
 	// ConnectionFlagLocalNode is an alias for ConnFwdLocalNode.
+	//
 	// Deprecated: Use ConnFwdLocalNode instead.
+	//go:fix inline
 	ConnectionFlagLocalNode = ConnFwdLocalNode
 
 	// ConnectionFlagTunnel is an alias for ConnFwdTunnel.
+	//
 	// Deprecated: Use ConnFwdTunnel instead.
+	//go:fix inline
 	ConnectionFlagTunnel = ConnFwdTunnel
 
 	// ConnectionFlagDirectRoute is an alias for ConnFwdDirectRoute.
+	//
 	// Deprecated: Use ConnFwdDirectRoute instead.
+	//go:fix inline
 	ConnectionFlagDirectRoute = ConnFwdDirectRoute
 )
 
