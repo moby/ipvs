@@ -3,65 +3,69 @@ package ns
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
 	"golang.org/x/sys/unix"
 )
 
-var (
-	initNs   netns.NsHandle
-	initNl   *netlink.Handle
-	initOnce sync.Once
-)
-
 // NetlinkSocketsTimeout represents the default timeout duration for the sockets
 const NetlinkSocketsTimeout = 3 * time.Second
 
-// Init initializes a new network namespace
+// Init initializes the initial network namespace handles.
 func Init() {
-	var err error
-	initNs, err = netns.Get()
-	if err != nil {
-		logrus.Errorf("could not get initial namespace: %v", err)
-	}
-	initNl, err = netlink.NewHandle(getSupportedNlFamilies()...)
-	if err != nil {
-		logrus.Errorf("could not create netlink handle on initial namespace: %v", err)
-	}
-	err = initNl.SetSocketTimeout(NetlinkSocketsTimeout)
-	if err != nil {
-		logrus.Warnf("Failed to set the timeout on the default netlink handle sockets: %v", err)
-	}
+	_, _ = initHandles()
 }
+
+type handles struct {
+	ns netns.NsHandle
+	nl *netlink.Handle
+}
+
+var initHandles = sync.OnceValues(func() (handles, error) {
+	ns, err := netns.Get()
+	if err != nil {
+		return handles{}, fmt.Errorf("get initial namespace: %w", err)
+	}
+
+	nl, err := netlink.NewHandle(getSupportedNlFamilies()...)
+	if err != nil {
+		_ = ns.Close()
+		return handles{}, fmt.Errorf("create netlink handle: %w", err)
+	}
+
+	if err := nl.SetSocketTimeout(NetlinkSocketsTimeout); err != nil {
+		nl.Close()
+		_ = ns.Close()
+		return handles{}, fmt.Errorf("set netlink socket timeout: %w", err)
+	}
+
+	return handles{ns: ns, nl: nl}, nil
+})
 
 // SetNamespace sets the initial namespace handler
 func SetNamespace() error {
-	initOnce.Do(Init)
-	if err := netns.Set(initNs); err != nil {
+	h, err := initHandles()
+	if err != nil {
+		return fmt.Errorf("initialize namespace: %w", err)
+	}
+
+	if err := netns.Set(h.ns); err != nil {
 		linkInfo, linkErr := getLink()
 		if linkErr != nil {
 			linkInfo = linkErr.Error()
 		}
-		return fmt.Errorf("failed to set to initial namespace, %v, initns fd %d: %w", linkInfo, initNs, err)
+		return fmt.Errorf("failed to set to initial namespace, %v, initns fd %d: %w", linkInfo, h.ns, err)
 	}
 	return nil
 }
 
 // ParseHandlerInt transforms the namespace handler into an integer
 func ParseHandlerInt() int {
-	return int(getHandler())
-}
-
-// GetHandler returns the namespace handler
-func getHandler() netns.NsHandle {
-	initOnce.Do(Init)
-	return initNs
+	h, _ := initHandles()
+	return int(h.ns)
 }
 
 func getLink() (string, error) {
@@ -70,26 +74,17 @@ func getLink() (string, error) {
 
 // NlHandle returns the netlink handler
 func NlHandle() *netlink.Handle {
-	initOnce.Do(Init)
-	return initNl
+	h, _ := initHandles()
+	return h.nl
 }
 
 func getSupportedNlFamilies() []int {
 	fams := []int{unix.NETLINK_ROUTE}
-	// NETLINK_XFRM test
-	if err := checkXfrmSocket(); err != nil {
-		logrus.Warnf("Could not load necessary modules for IPSEC rules: %v", err)
-	} else {
+
+	if err := checkXfrmSocket(); err == nil {
 		fams = append(fams, unix.NETLINK_XFRM)
 	}
-	// NETLINK_NETFILTER test
-	if err := loadNfConntrackModules(); err != nil {
-		if checkNfSocket() != nil {
-			logrus.Warnf("Could not load necessary modules for Conntrack: %v", err)
-		} else {
-			fams = append(fams, unix.NETLINK_NETFILTER)
-		}
-	} else {
+	if err := checkNfSocket(); err == nil {
 		fams = append(fams, unix.NETLINK_NETFILTER)
 	}
 
@@ -103,16 +98,6 @@ func checkXfrmSocket() error {
 		return err
 	}
 	return unix.Close(fd)
-}
-
-func loadNfConntrackModules() error {
-	if out, err := exec.Command("modprobe", "-va", "nf_conntrack").CombinedOutput(); err != nil {
-		return fmt.Errorf("running modprobe nf_conntrack failed with message: `%s`, error: %w", strings.TrimSpace(string(out)), err)
-	}
-	if out, err := exec.Command("modprobe", "-va", "nf_conntrack_netlink").CombinedOutput(); err != nil {
-		return fmt.Errorf("running modprobe nf_conntrack_netlink failed with message: `%s`, error: %w", strings.TrimSpace(string(out)), err)
-	}
-	return nil
 }
 
 // API check on required nf_conntrack* modules (nf_conntrack, nf_conntrack_netlink)
